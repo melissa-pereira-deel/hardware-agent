@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "risk-broker": {
+      "command": "${HOME}/dev/hardware-agent/.venv/bin/python",
+      "args": ["-m", "risk_broker.server"],
+      "cwd": "${HOME}/dev/hardware-agent",
+      "env": {
+        "RISK_BROKER_AUDIT": "${HOME}/dev/hardware-agent/.audit.jsonl",
+        "RISK_BROKER_TIMEOUT": "600"
+      }
+    }
+  }
+}
