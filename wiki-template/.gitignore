@@ -2,8 +2,17 @@
 *.tmp
 __pycache__/
 
-# raw/ is cached third-party documents. Decide deliberately whether these
-# belong in git history. Tracking them makes the wiki self-contained and
-# reproducible; it also means copyrighted PDFs live in your history forever.
-# Uncomment to keep them local-only:
-# raw/
+# raw/ holds cached third-party documents - datasheets, service manuals.
+#
+# The BYTES stay out of git deliberately. Tracking them would put copyrighted
+# PDFs in your history permanently, which contradicts the posture argued in
+# skills/knowledge-base/references/legal-and-etiquette.md.
+#
+# The LEDGER is tracked: raw/MANIFEST.tsv records filename, URL, publisher,
+# sha256 and retrieval date for every document fetched. So a fresh clone can
+# still say exactly what was read, and a re-fetch can be verified against the
+# recorded hash to detect a silently revised datasheet - without
+# redistributing anything.
+raw/**
+!raw/.gitkeep
+!raw/MANIFEST.tsv

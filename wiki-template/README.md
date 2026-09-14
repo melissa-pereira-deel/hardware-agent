@@ -9,6 +9,7 @@ Markdown in git, searched with ripgrep. No database, by design - see
 
 ```
 raw/       cached source documents. Immutable. Never edited, never republished.
+           Not tracked by git; raw/MANIFEST.tsv records what was fetched.
 scratch/   agent drafts. Untrusted, disposable.
 wiki/      canonical entries. Every one has provenance. Gated by review.
 ```
@@ -27,11 +28,13 @@ cat wiki/INDEX.md
 ## Linting
 
 ```bash
-python3 ../hardware-agent/harness/kb/lint.py wiki/
-python3 ../hardware-agent/harness/kb/lint.py wiki/ --stale 180
+python3 ~/dev/hardware-agent/harness/kb/lint.py wiki/
+python3 ~/dev/hardware-agent/harness/kb/lint.py wiki/ --stale 180
 ```
 
-The pre-commit hook runs this automatically.
+The pre-commit hook runs this automatically, with the linter path baked in as
+an absolute path at bootstrap time. If the linter goes missing the hook fails
+loudly rather than passing silently — "couldn't check" is not "checked".
 
 ## Legal posture
 
