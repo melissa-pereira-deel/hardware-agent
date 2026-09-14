@@ -58,6 +58,10 @@ verify-broker:
 check-routing:
     {{py}} harness/check_skill_routing.py
 
+# Show what the wiki write gate allows and blocks.
+check-gate:
+    {{py}} harness/kb/check_gate.py
+
 # Create a new knowledge wiki at the given path.
 bootstrap-wiki path:
     ./harness/kb/bootstrap.sh {{path}}

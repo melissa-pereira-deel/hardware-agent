@@ -61,7 +61,7 @@ rules:
   # ---------------------------------------------------------------- T3
   - tier: 3
     name: kb-canonicalize
-    match: '^(cp|mv|tee|rsync|install)\b.*\bwiki/|^git\s+(add|commit|mv|rm)\b.*\bwiki/|^kb[_-]?canonicalize\b|^promote[_-]to[_-]wiki\b'
+    match: '^(cp|mv|tee|rsync|install)\b.*\bwiki/|^git\s+(add|commit|mv|rm)\b.*\bwiki/|>>?\s*\S*wiki/|^kb[_-]?canonicalize\b|^promote[_-]to[_-]wiki\b'
     reason: >
       Writing to the canonical wiki mutates shared state that every other agent
       reads. A wrong entry propagates silently and later sessions cite it as
