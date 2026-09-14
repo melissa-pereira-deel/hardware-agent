@@ -84,20 +84,35 @@ sigrok/PulseView capture.
 
 **T2 — confirm first (state which physical device, and how to recover):**
 ```bash
-esptool.py --port /dev/cu.usbmodem1101 write_flash 0x0 firmware.bin
+idf.py -p /dev/cu.usbmodem1101 flash    # prefer this: it uses the offsets the build computed
+esptool --port /dev/cu.usbmodem1101 write-flash 0x10000 app.bin
 pio run -t upload
 arduino-cli upload -p /dev/cu.usbmodem1101 --fqbn ...
 esphome run lamp.yaml
 openocd / probe-rs / pyocd / picotool   # program, halt, reset
 ```
+
+**Flash offsets are part-family specific — do not recall them.** The bootloader
+sits at **0x1000 on ESP32 and ESP32-S2**, but at **0x0 on C3, C6, H2 and S3**.
+Partition table is 0x8000 and the app 0x10000 on all of them. Flashing a
+bootloader to 0x0 on an ESP32 classic produces a board that does not boot and
+looks like a hardware fault. `idf.py flash` reads the offsets from the build,
+which is why it is the right default; hand-written `write-flash` offsets are
+where this goes wrong.
+
+**Tool naming:** esptool v5 deprecated the `.py` suffixes (`esptool.py`,
+`espefuse.py`) in favour of bare console scripts, and moved to hyphenated
+subcommands (`write-flash`). The old forms still work but warn, and are slated
+for removal in the next major. Write the new form.
 Also T2: GPIO writes via `libgpiod`, I2C/SPI writes, BLE writes via `bleak`,
 MQTT publishes to live devices, Home Assistant service calls.
 
 **T3 — draft the command, explain, and stop:**
 ```bash
-espefuse.py burn_key ...        # IRREVERSIBLE
-espefuse.py burn_efuse ...      # IRREVERSIBLE
-# enabling secure boot / flash encryption
+espefuse burn_key ...           # IRREVERSIBLE
+espefuse burn_efuse ...         # IRREVERSIBLE
+# enabling secure boot / flash encryption — note there is no single command;
+# it is a menuconfig setting plus a first boot. See the reference.
 avrdude -U lfuse:w:...          # can make a chip unreachable without HV programming
 ```
 Read `references/esp32-irreversible.md` before even drafting these.

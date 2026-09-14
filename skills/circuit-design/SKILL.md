@@ -24,18 +24,24 @@ drop. Always: 0.1 µF ceramic as close as physically possible to each IC power
 pin, plus bulk capacitance on the rail.
 
 **Addressable LEDs are a thermal product, not a lighting effect.** A 60 LED/m
-WS2812B strip at full white dissipates roughly 18 W per metre, and the WS2812B
-has no integrated heatsink — that heat goes straight into the flexible PCB.
-Their luminous efficacy is also poor: roughly 30–40 lm/W against 120+ lm/W for
-a plain 2835 white strip. For a lighting *product*, addressable LEDs are a
-colour-effect layer, not the main light source. See
-`references/led-power-thermal.md` before specifying any strip.
+WS2812B strip at full white draws about 3.6 A/m — roughly 18 W at 5 V — and
+almost all of that becomes heat, straight into the flexible PCB, because there
+is no integrated heatsink. Efficacy is poor too: order of 30–40 lm/W against
+120–160 lm/W for a plain 2835 white strip. So for a lighting *product*,
+addressable LEDs are a colour-effect layer, not the main light source.
+
+Two caveats that matter more than the numbers: **the 60 mA/LED figure is not in
+the WS2812B datasheet** — it contains no current spec at all — and the efficacy
+figures are industry-reported, not vendor-published. Both are sound enough to
+design against and worth measuring on the strip you actually bought. See
+`references/led-power-thermal.md`, which carries the provenance for each.
 
 **Level shifting between 3.3 V and 5 V is the classic silent failure.** An
-ESP32 outputs 3.3 V logic; a 5 V-powered WS2812 wants roughly 0.7 × VDD = 3.5 V
-to register a logic high. It often "works on the bench" and fails in the field
-or at temperature. Use a proper level shifter, or power the strip at 4.5 V, or
-sacrifice the first LED as a buffer.
+ESP32 outputs 3.3 V logic. The WS2812B datasheet specifies V_IH = 0.7 × VDD, so
+a 5 V-powered strip needs 3.5 V for a guaranteed high — 3.3 V is out of spec.
+It usually works anyway, which is precisely the danger: the bench passes and
+the field fails, or it fails at temperature. Use a proper level shifter
+(74AHCT125), power the strip at ~4.5 V, or sacrifice the first LED as a buffer.
 
 **Antennas need quiet space.** *Analogy: a microphone next to a wall picks up
 mush; cup your hand over it and it's worse.* Every ESP32 module datasheet

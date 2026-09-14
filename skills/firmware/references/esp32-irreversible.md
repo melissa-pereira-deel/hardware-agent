@@ -16,11 +16,36 @@ Consequences of getting one wrong:
 ## The commands (draft these, never run them)
 
 ```bash
-espefuse.py --port <PORT> burn_key <block> <keyfile> <purpose>
-espefuse.py --port <PORT> burn_efuse <EFUSE_NAME> <value>
-espefuse.py --port <PORT> burn_bit <block> <bit>
-idf.py secure-boot-enable          # and related secure boot flows
+espefuse --port <PORT> burn_key <block> <keyfile> <purpose>
+espefuse --port <PORT> burn_efuse <EFUSE_NAME> <value>
+espefuse --port <PORT> burn_bit <block> <bit>
 ```
+
+esptool v5 deprecated the `.py` suffix; `espefuse.py` still works but warns.
+
+### Secure Boot v2 is not a command
+
+There is **no `idf.py secure-boot-enable`.** An earlier version of this file
+said there was, which is worse than saying nothing — it looks authoritative and
+it does not exist. The actual flow:
+
+1. `idf.py menuconfig` → Security features → *Enable hardware Secure Boot in
+   bootloader*
+2. `idf.py bootloader` — builds the secure bootloader
+3. Flash the bootloader with the `esptool write-flash` command the build prints
+4. `idf.py flash` — partition table and app
+
+**The eFuse is not burned by any of those steps.** `ABS_DONE_1` is set **by the
+bootloader itself, on first boot**, once a valid partition table and app are
+present. That is the detail that matters for safety: the point of no return is
+a *power-on*, not a command you can decide not to run. Once that board boots,
+it is done.
+
+The real `idf.py` security subcommands are `secure-generate-signing-key`,
+`secure-sign-data` and `secure-verify-signature`. None of them burn anything.
+
+*Verified against Espressif ESP-IDF Secure Boot v2 documentation, 2026-09-14:*
+https://docs.espressif.com/projects/esp-idf/en/stable/esp32/security/secure-boot-v2.html
 
 ## The response shape when this comes up
 

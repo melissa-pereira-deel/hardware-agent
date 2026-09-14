@@ -20,9 +20,12 @@ local distributor once import time and taxes are counted, especially at
 prototype quantities. See `references/brazil-sourcing.md`.
 
 **"Basic" versus "extended" at JLCPCB is a real cost line.** Basic parts sit
-on the machine already; extended parts incur a per-part-number setup fee.
-Designing with basic parts wherever the value is uncritical (resistors,
-capacitors, common LEDs) meaningfully lowers assembly cost on small runs.
+on the machine already; extended parts incur **$3 per unique part number** for
+feeder loading — per part number, not per placement. Twenty different extended
+parts is $60 before a single component price. There is also a *Preferred
+Extended* class that waives the fee on Economic PCBA, which is not obvious from
+the part number. See `references/lcsc-jlcpcb-parts.md`, shared with
+`manufacturing-dfm`.
 
 **A BOM line without an alternate is a single point of failure.** Every
 critical line needs at least one qualified second source, or an explicit note
@@ -55,7 +58,7 @@ keep two candidates alive.
 ## Tools
 
 **T1 — read freely:**
-- **Nexar GraphQL API** (`api.nexar.com/graphql`) for Octopart data. Note the free Evaluation tier is far tighter than it looks: a *lifetime* limit of 1,000 parts, counted per part object returned (default 10 per query), and newly created apps default to a limit of 0. Paid tiers are expensive — third-party trackers cite roughly $500/month for ~2,000 parts/month and ~$2,000/month at the next tier. Budget queries; don't burn the allowance on exploratory searches.
+- **Nexar GraphQL API** (`api.nexar.com/graphql`) for Octopart data. ⚠️ **Unverified (checked 2026-09-14):** earlier notes here claimed a 1,000-part *lifetime* evaluation limit, new apps defaulting to 0, and roughly $500/month for ~2,000 parts. Nexar does not publish pricing publicly and none of this could be confirmed. Treat the free tier as *tight and worth checking before you depend on it*, and get current limits from your own account dashboard. Do not quote these figures to anyone.
 - **DigiKey and Mouser APIs** — often the better default given the Nexar limits.
 - **LCSC / JLCPCB parts library** for assembly-compatible parts and basic/extended status.
 - **SnapEDA, Ultra Librarian, Component Search Engine** for symbols, footprints and 3D models — always verified against the datasheet.
@@ -80,5 +83,5 @@ extended parts, and the longest lead time on the board.
 ## Connections
 
 - Part choices constrain `circuit-design` (footprints, thermal, pinout).
-- Basic/extended status and package choice feed `manufacturing-dfm` assembly cost.
+- Basic/extended status and package choice feed `manufacturing-dfm` assembly cost, via the shared `references/lcsc-jlcpcb-parts.md`.
 - Module selection is jointly a certification decision — see the ANATEL reference in `manufacturing-dfm`.

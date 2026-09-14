@@ -22,9 +22,13 @@ module** rather than a bare chip is the single largest scope reduction
 available. Read `references/anatel-homologation.md` before committing to a
 radio.
 
-**Panelization is how small boards get built affordably.** Below roughly
-70×70 mm, boards are panelized for assembly. `kikit` generates panels with
-mouse-bites or v-cuts from KiCad files. Leave rails, tooling holes and fiducials.
+**Panelization is about the assembly service's minimum board size, and the
+rule runs backwards from intuition.** 70 × 70 mm is a *minimum*, not a maximum —
+and it applies only to JLCPCB's Standard PCBA. Economic PCBA accepts boards down
+to 10 × 10 mm as-is, which for small-batch work usually means no panelization at
+all. Check which service you're quoting before doing the work. `kikit` generates
+panels with mouse-bites or V-cuts from KiCad files; leave rails, tooling holes
+and fiducials. Details in `references/jlcpcb-capabilities.md`.
 
 **Design for test, or debug every unit by hand.** Test points on every rail,
 on reset, on boot-mode pins, and on any bus you'd want to probe. Pogo-pin
@@ -51,9 +55,9 @@ ID, authorised test lab, DCL listing — on top of the radio certification.
 ## Traps
 
 - **Sending the KiCad file instead of the Gerbers.** The fab builds the Gerbers. Open them in a viewer first.
-- **Trace widths below the fab's capability.** JLCPCB: 5 mil (0.127 mm) minimum trace and space on 1–2 layer 1 oz boards; 3.5 mil (0.0889 mm) on multilayer; minimum 0.15 mm via hole paired with at least a 0.15 mm annular ring. See `references/jlcpcb-capabilities.md`.
+- **Trace widths below the fab's capability.** Don't recall these — they change and they are layer-count dependent. Read `references/jlcpcb-capabilities.md`, which carries the current figures with the date they were checked.
 - **No fiducials or tooling holes.** The assembler will ask, and you'll lose a week.
-- **Assuming a 3D-printed enclosure handles the heat.** PLA softens around 60 °C. A lamp enclosure in PLA with an 18 W/m strip inside is a problem — and a fire risk, not just a warranty risk.
+- **Assuming a 3D-printed enclosure handles the heat.** Design against PLA's heat-deflection temperature (~53 °C), not its glass transition (60–65 °C) — HDT is the lower number and the one a loaded part creeps at. A sealed PLA enclosure with an 18 W/m strip inside will exceed it. Fire risk, not a warranty footnote.
 - **Claiming compliance.** Never state a product is FCC/CE/ANATEL compliant. State what the path is and who certifies it.
 - **Changing antenna geometry or RF settings after homologation.** It invalidates the certificate.
 
@@ -91,5 +95,5 @@ checking it against capability rules, and producing the quote are all T1.
 ## Connections
 
 - Trace widths, copper weight and via counts come from the current and thermal budgets in `circuit-design`.
-- Basic/extended part status and assembly cost come from `sourcing-bom`.
+- Basic/extended part status and assembly cost: `../sourcing-bom/references/lcsc-jlcpcb-parts.md`, shared with `sourcing-bom`.
 - Secure boot and factory provisioning straddle this skill and `firmware`.
