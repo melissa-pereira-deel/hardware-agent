@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased — closing the Bash gap in the write gate
+
+### Fixed
+
+- **`deny_wiki_write.py` matched only `Write|Edit|MultiEdit|NotebookEdit`**, so
+  a shell command wrote straight into the canonical wiki. It now handles `Bash`
+  too, splitting on shell operators and inspecting each segment. No escape
+  hatch: the agent drafts, lints, shows the diff and prints the commands — you
+  run them, which is what `AGENT.md` already says T3 means. The refusal hands
+  the exact command over rather than being a dead end.
+- **`raw/` is now append-only.** Creating a cached document is fine; overwriting
+  or deleting one is blocked, because every `part` entry pins a `sha256` of the
+  bytes it was written from.
+- **A false positive my own tests caught:** `cp raw/cached.pdf scratch/copy.pdf`
+  was blocked, because every argument was checked rather than distinguishing
+  source from destination. Copying *out* of a protected tree is a read. The
+  allow-list half of that test file matters more than the block half — a gate
+  that blocks `rg wiki/` gets switched off within a day.
+
+### Changed
+
+- The hook now reads `kb-canonicalize` out of `policy/tool-tiers.yaml` instead
+  of carrying its own copy of the pattern, which finally makes that rule
+  load-bearing — `REVIEW.md` §5 complained it guarded a path the agent does not
+  take. Restored the redirect clause Phase 1 dropped when anchoring patterns.
+
+### Added
+
+- `harness/tests/test_deny_hook.py` — 56 tests.
+- `harness/kb/check_gate.py` and `just check-gate`.
+
+### Correction
+
+**Hook registrations load at session start.** A live canary in the session that
+registered the Bash matcher *succeeded* — the file was created. The script's
+logic is correct and tested; its wiring does not activate until a new session.
+
+Earlier statements in this project that the hook "blocks me from writing to
+`wiki/`" were based on piping payloads into the script by hand. That tests the
+script, not the wiring, and it was presented with more confidence than the
+evidence supported. `check_gate.py --live` prints the canary test that actually
+settles it.
+
 ## Unreleased — Phase 4: smoke tests
 
 Five cold agents, one per prompt, no memory of the session that wrote the
