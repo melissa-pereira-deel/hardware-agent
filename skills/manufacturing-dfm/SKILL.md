@@ -1,6 +1,6 @@
 ---
 name: manufacturing-dfm
-description: Get a design from "works on my bench" to something a factory can actually build — design for manufacture and assembly, fab capability rules, panelization, test points and bring-up fixtures, Gerber and assembly-file handoff to JLCPCB or PCBWay, 3D printed enclosures and slicing, and certification strategy including ANATEL homologation for Brazil, CE, FCC, RoHS and Matter. Use this skill before any board is ordered, whenever someone asks "can this be made?", "what will this cost to build?", "do we need certification?", or mentions a fab house, an enclosure, a panel, or selling a product in a specific country.
+description: Get a design from "works on my bench" to something a factory can actually build — design for manufacture and assembly, fab capability rules, panelization, test points and bring-up fixtures, Gerber and assembly-file handoff to JLCPCB or PCBWay, 3D printed enclosures and slicing, and certification strategy including ANATEL homologation for Brazil, CE, FCC, RoHS and Matter. Use this skill before any board is ordered, whenever someone asks "can this be made?", "what will this cost to build?", "do we need certification?", "can we sell this in Brazil?", or "is this legal to ship?" — and whenever a Wi-Fi, BLE, Zigbee or Thread radio, a fab house, an enclosure, a panel, homologation, or selling a product in any specific country comes up.
 ---
 
 # Manufacturing & DFM

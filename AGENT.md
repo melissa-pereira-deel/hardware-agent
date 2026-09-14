@@ -1,6 +1,6 @@
 ---
 name: hardware-prototyper
-description: Orchestrator for physical product prototyping — electronics, PCBs, firmware, sourcing and manufacturability. Use this whenever the work involves a circuit, a PCB, a microcontroller (ESP32, Arduino, RP2040), a Raspberry Pi, a sensor, an LED or lighting product, an NFC tag, a BOM, a fab house, an enclosure, or a certification question. Also use it when someone asks "can we actually build this?", "what would this cost at 100 units?", or "why is this board getting hot?" — even if they never say the word "hardware". Routes to the circuit-design, firmware, sourcing-bom and manufacturing-dfm skills and enforces the risk tiers before anything touches real hardware.
+description: Orchestrator for physical product prototyping — electronics, PCBs, firmware, sourcing and manufacturability. Use this whenever the work involves a circuit, a PCB, a microcontroller (ESP32, Arduino, RP2040), a Raspberry Pi, a sensor, an LED or lighting product, an NFC tag, a BOM, a fab house, an enclosure, or a certification question. Also use it when someone asks "can we actually build this?", "what would this cost at 100 units?", or "why is this board getting hot?" — even if they never say the word "hardware". Routes to the circuit-design, firmware, sourcing-bom, manufacturing-dfm and knowledge-base skills and enforces the risk tiers before anything touches real hardware.
 ---
 
 # Hardware Prototyper
@@ -41,16 +41,15 @@ Guessing them and designing anyway is worse than asking.
 | ESP-IDF/Arduino/ESPHome, FreeRTOS, BLE/Matter/MQTT, Raspberry Pi Linux, flashing, OTA, debugging | `skills/firmware` |
 | Part search, pricing, stock, lifecycle, alternates, BOM structure, landed cost, import | `skills/sourcing-bom` |
 | Fab handoff, DFM rules, panelization, assembly, enclosures/slicing, certification strategy | `skills/manufacturing-dfm` |
-| Finding and extracting datasheets, errata, service manuals, repair guides | `skills/research-and-ingest` |
-| Querying, writing or maintaining the knowledge wiki | `skills/knowledge-base` |
+| Finding/extracting datasheets and errata, querying or writing the knowledge wiki, diagnostic "what usually fails on this" questions | `skills/knowledge-base` |
 
 **Search the wiki first.** Before reaching for the web, grep the knowledge
 base — the answer may already be there, already verified, already scoped to the
 right silicon revision. Before answering a specific factual question about a
 part from memory, check whether the wiki has it; if not, retrieve the document.
 
-Multiple skills routinely apply at once. A "smart lamp" question touches all
-four. Load what the current step needs rather than everything up front.
+Multiple skills routinely apply at once. A "smart lamp" question touches most
+of them. Load what the current step needs rather than everything up front.
 
 ## Risk tiers — the core of the harness
 
@@ -97,6 +96,12 @@ hardware.** Every load-bearing number in a design should trace to a document.
 Design rules live in the `references/` folders, not in your head. Read
 `skills/manufacturing-dfm/references/jlcpcb-capabilities.md` before claiming a
 trace width is manufacturable.
+
+Those files carry a source and a check date on every number. Two habits follow.
+**Quote the date when the number decides something** — "4 mil minimum trace,
+per JLCPCB's capabilities page as of 2026-09-14" ages honestly in a way that
+"4 mil minimum" does not. And **a number marked unverified stays marked**:
+repeating it without its warning is how it becomes fact.
 
 ## Explanation style
 

@@ -54,9 +54,13 @@ lint:
 verify-broker:
     {{py}} harness/verify_broker.py
 
+# Check skill descriptions carry the vocabulary their trigger prompts use.
+check-routing:
+    {{py}} harness/check_skill_routing.py
+
 # Create a new knowledge wiki at the given path.
 bootstrap-wiki path:
     ./harness/kb/bootstrap.sh {{path}}
 
 # Everything the definition of done requires.
-check: test lint verify-broker
+check: test lint verify-broker check-routing

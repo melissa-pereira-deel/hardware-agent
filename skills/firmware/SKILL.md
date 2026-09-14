@@ -1,6 +1,6 @@
 ---
 name: firmware
-description: Write, build, flash and debug embedded firmware for ESP32 (ESP-IDF, Arduino, ESPHome), Arduino boards, RP2040 and Raspberry Pi Linux — including FreeRTOS task design, BLE GATT, Matter/Thread, MQTT, deep sleep and power optimisation, OTA updates and rollback, provisioning, and hardware bring-up debugging. Use this skill for anything involving firmware code, a serial monitor, a flash command, a board that won't boot, a device that drains its battery too fast, or a decision between Arduino and ESP-IDF. Also use it when the question is "why is this device behaving like that?" and the answer lives in software running on a microcontroller.
+description: Write, build, flash and debug embedded firmware for ESP32 (ESP-IDF, Arduino, ESPHome), Arduino boards, RP2040 and Raspberry Pi Linux — including FreeRTOS task design, BLE GATT, Matter/Thread, MQTT, deep sleep and power optimisation, OTA updates and rollback, provisioning, and hardware bring-up debugging. Also covers device security and factory programming — secure boot, flash encryption, eFuse burns, and enabling any of these on production units — all of which are irreversible and advisory-only. Use this skill for anything involving firmware code, a serial monitor, a flash command, a board that won't boot, a device that drains its battery too fast, or a decision between Arduino and ESP-IDF. Also use it when the question is "why is this device behaving like that?" and the answer lives in software running on a microcontroller.
 ---
 
 # Firmware

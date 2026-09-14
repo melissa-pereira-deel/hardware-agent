@@ -185,3 +185,32 @@ def test_first_matching_rule_wins_t3_before_t2() -> None:
     """A command that matches both a T3 and a T2 rule must classify as T3."""
     c = policy.classify("esptool.py --encrypt write_flash 0x10000 app.bin")
     assert c.tier == 3
+
+
+# ------------------------------------------------- skill frontmatter validity
+
+
+def test_every_skill_frontmatter_parses_and_has_name_and_description() -> None:
+    """A SKILL.md whose YAML does not parse does not load at all.
+
+    Regression: an unquoted ': ' inside a description silently broke the
+    frontmatter of three skills at once.
+    """
+    import yaml
+    from pathlib import Path
+
+    repo = Path(__file__).resolve().parents[2]
+    skills = sorted((repo / "skills").glob("*/SKILL.md"))
+    assert skills, "no skills found"
+
+    for path in skills:
+        text = path.read_text(encoding="utf-8")
+        assert text.startswith("---"), f"{path.name}: no frontmatter"
+        _, fm, _ = text.split("---", 2)
+        meta = yaml.safe_load(fm)  # raises on the ': ' bug
+        assert isinstance(meta, dict), f"{path}: frontmatter is not a mapping"
+        assert meta.get("name"), f"{path}: missing name"
+        assert meta.get("description"), f"{path}: missing description"
+        assert meta["name"] == path.parent.name, (
+            f"{path}: name '{meta['name']}' != directory '{path.parent.name}'"
+        )
