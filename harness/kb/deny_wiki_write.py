@@ -19,7 +19,15 @@ What this does NOT do
 It raises the bar against accident and habit. **It does not stop a determined
 bypass.** `cd wiki/hardware && cp ../../scratch/x.md .` defeats path matching
 outright; so does assembling a path in a shell variable, or a base64'd
-heredoc. Command-string inspection cannot be made airtight and this file will
+heredoc.
+
+**Script indirection defeats it completely, and this is the likely accidental
+case.** The hook sees the command string only. `just something`, `make merge`,
+`./deploy.sh` and `python3 build.py` are opaque - whatever they write happens in
+a child process the hook never inspects. Any recipe or script that writes into
+`wiki/` bypasses this gate without anyone intending it. That is also why the
+activation canary below must be a bare `touch` typed directly: wrapping it in a
+`just` target would make it pass whether or not the hook is live. Command-string inspection cannot be made airtight and this file will
 not pretend otherwise - the broker README once claimed its allowlist was "what
 stops rm -rf /" and that claim is why REVIEW.md section 1.1 exists.
 

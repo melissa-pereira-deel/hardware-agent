@@ -76,6 +76,10 @@ Transcripts land in `transcripts/`.
 `harness/kb/deny_wiki_write.py` blocks Write/Edit/Bash writes into `wiki/`.
 Its logic is covered by `harness/tests/test_deny_hook.py` and `just check-gate`.
 
+**The hook sees command strings, not what child processes do.** A write
+performed inside `just`, `make`, or any script is invisible to it. Do not build
+the canary into a recipe — it would pass regardless.
+
 **Hook registrations load at session start.** A hook added or edited mid-session
 is inert until a new session begins. Do not conclude the gate is live because
 the script refuses a payload you pipe into it by hand — that tests the script,
