@@ -1,0 +1,30 @@
+[project]
+name = "hardware-agent"
+version = "0.1.0"
+description = "Risk-tiered harness and skills for hardware prototyping"
+requires-python = ">=3.10"
+
+dependencies = [
+    # Pinned to the v2 line deliberately. MCP Python SDK 2.0.0 removed
+    # mcp.server.fastmcp and renamed FastMCP -> MCPServer; an unpinned
+    # install is what broke the original server.py. See REVIEW.md §1.2.
+    "mcp[cli]>=2.2,<3",
+    "pyyaml>=6,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+risk-broker = "risk_broker.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["harness/risk_broker"]
+
+[tool.pytest.ini_options]
+testpaths = ["harness/tests"]
+addopts = "-q"
