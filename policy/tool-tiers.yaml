@@ -5,11 +5,22 @@
 # T1 autonomous      - read / analyse / simulate / generate. No device state, no money.
 # T2 confirm-first   - writes to a connected device. Reversible by re-flashing.
 # T3 advisory-only   - irreversible, physical hazard, money, motion, or regulatory.
+#
+# Patterns match against the NORMALIZED argv (shlex-parsed, space-joined), not
+# against raw shell text. The broker refuses shell metacharacters outright, so
+# one invocation is exactly one command. That is what makes `^` anchors here
+# meaningful: before, `grep` matched anywhere in a pipeline and `lint\.py`
+# matched any path ending in lint.py.
+#
+# Narrowing a rule in this file is always safe: anything that stops matching
+# falls through to default_tier (3) and is refused. Widening one is not.
 
-version: 1
+version: 2
 
 binaries_allowed:
   # Anything not on this list is refused outright, whatever tier it would match.
+  # NOTE: python/python3 are broad by nature. They are constrained by the tier
+  # rules below, which only admit the repo's own linter - not any lint.py.
   - kicad-cli
   - kikit
   - python
@@ -50,25 +61,27 @@ rules:
   # ---------------------------------------------------------------- T3
   - tier: 3
     name: kb-canonicalize
-    match: '\b(cp|mv|tee|rsync|install)\b.*\bwiki/|>>?\s*\S*wiki/|kb[_-]?canonicalize|promote[_-]to[_-]wiki'
+    match: '^(cp|mv|tee|rsync|install)\b.*\bwiki/|^git\s+(add|commit|mv|rm)\b.*\bwiki/|^kb[_-]?canonicalize\b|^promote[_-]to[_-]wiki\b'
     reason: >
       Writing to the canonical wiki mutates shared state that every other agent
       reads. A wrong entry propagates silently and later sessions cite it as
       ground truth. Requires lint pass plus a human reading the diff.
+      NOTE: this rule only sees shell commands. The agent's file-writing tools
+      do not pass through this broker, so the load-bearing gate is the wiki
+      repo's pre-commit hook. This is defence in depth, not the gate itself.
     see: skills/knowledge-base/references/trust-and-provenance.md
 
   - tier: 3
     name: bulk-crawl
-    match: 'crawl.*--depth|--max-pages|spider|scrapy\s+crawl'
+    match: '--depth\b|--max-pages\b|^spider\b|^scrapy\s+crawl\b'
     reason: >
       Bulk crawling creates the legal exposure, fills the KB with staleness, and
       burdens the sites you depend on. Fetch one document on demand instead.
     see: skills/research-and-ingest/references/legal-and-etiquette.md
 
-  # ---------------------------------------------------------------- T3
   - tier: 3
     name: efuse-burn
-    match: 'espefuse|burn_key|burn_efuse|burn_bit'
+    match: '^espefuse(\.py)?\b|\bburn[_-](key|efuse|bit|key_digest|block)\b'
     reason: >
       eFuse bits are one-time programmable and only change 0 to 1. A wrong burn
       permanently bricks the chip or locks out all future firmware updates.
@@ -76,7 +89,7 @@ rules:
 
   - tier: 3
     name: secure-boot-or-flash-encryption
-    match: 'secure-boot|secure_boot|flash[_-]encryption|--encrypt'
+    match: '\bsecure[_-]boot\b|\bflash[_-]encryption\b|--encrypt\b'
     reason: >
       Enabling secure boot or flash encryption is irreversible and removes the
       serial recovery path. Enable only after OTA is proven end to end.
@@ -84,19 +97,19 @@ rules:
 
   - tier: 3
     name: avr-fuse-write
-    match: 'avrdude.*-U\s+(l|h|e)fuse:w'
+    match: '^avrdude\b.*-U\s+(l|h|e)fuse:w'
     reason: >
       Wrong fuse settings can make the chip unreachable without a
       high-voltage programmer.
 
   - tier: 3
     name: spend-money
-    match: 'checkout|place[_-]?order|cart/submit|jlcpcb.*order|pcbway.*order'
+    match: '\bcheckout\b|\bplace[_-]?order\b|\bcart/submit\b|^.*jlcpcb.*\border\b|^.*pcbway.*\border\b'
     reason: Placing an order spends money. Prepare the quote, then stop.
 
   - tier: 3
     name: machine-motion
-    match: 'gcode.*send|printer.*print|cnc|grbl|laser'
+    match: '\bgcode\b.*\bsend\b|\bprinter\b.*\bprint\b|^cnc\b|\bgrbl\b|\blaser\b'
     reason: >
       Sending a job to a printer, CNC or laser starts unattended physical
       motion with fire and injury risk.
@@ -104,7 +117,7 @@ rules:
   # ---------------------------------------------------------------- T2
   - tier: 2
     name: outbound-fetch
-    match: 'crwl|crawl4ai|firecrawl|trafilatura|curl\s+http|playwright'
+    match: '^(crwl|crawl4ai|firecrawl|trafilatura|curl|wget|httpx)\b|\bplaywright\b'
     reason: >
       Nominally a read, but it hits third-party servers, consumes their
       bandwidth and can implicate terms of service. Rate-limit and identify
@@ -113,57 +126,57 @@ rules:
 
   - tier: 2
     name: scratch-write
-    match: 'scratch/'
+    match: '\bscratch/'
     reason: >
       Draft tier. Cheap and disposable, but still a write - keep it out of the
       canonical tree.
 
   - tier: 2
     name: flash-firmware
-    match: 'write_flash|erase_flash|-t\s+upload|\bupload\b|esphome\s+run|idf\.py\s+flash'
+    match: '\bwrite[_-]flash\b|\berase[_-]flash\b|^esphome\s+run\b|^idf\.py\b.*\bflash\b|^(arduino-cli|pio|platformio)\b.*\bupload\b'
     reason: >
       Writes firmware to a connected device. Reversible only if the device is
       physically reachable and has a working bootloader.
 
   - tier: 2
     name: debugger-write
-    match: 'openocd|probe-rs\s+(run|download|erase)|pyocd\s+(flash|erase)|picotool\s+(load|erase)'
+    match: '^openocd\b|^probe-rs\s+(run|download|erase)\b|^pyocd\s+(flash|erase)\b|^picotool\s+(load|erase)\b'
     reason: Programs, halts or resets a live target.
 
   - tier: 2
     name: device-io-write
-    match: 'gpioset|i2cset|spi_write|bleak.*write|mosquitto_pub'
+    match: '^(gpioset|i2cset|mosquitto_pub)\b|\bspi[_-]write\b|\bbleak\b.*\bwrite\b'
     reason: Drives real pins or writes to a live device or broker.
 
   # ---------------------------------------------------------------- T1
   - tier: 1
     name: kb-search
-    match: '\brg\b|ripgrep|grep|lint\.py'
+    match: '^(rg|ripgrep|grep)\b|\bharness/kb/lint\.py\b'
     reason: Reading and linting the local wiki. Touches nothing external.
 
   - tier: 1
     name: local-extract
-    match: 'docling|mlx_vlm|ollama|pymupdf'
+    match: '^(docling|mlx_vlm|ollama)\b|\bpymupdf\b'
     reason: Local document extraction. No network, no device, no cost.
 
   - tier: 1
     name: eda
-    match: 'kicad-cli|kikit|gerbv|ngspice'
+    match: '^(kicad-cli|kikit|gerbv|ngspice)\b'
     reason: Design-file generation and analysis. Touches no hardware.
 
   - tier: 1
     name: build
-    match: 'compile|pio run$|idf\.py build|esphome compile|image_info|wokwi-cli'
+    match: '^(arduino-cli|pio|platformio|idf\.py|esphome)\b.*\b(compile|build)\b|^(pio|platformio)\s+run$|^esptool(\.py)?\s+.*\bimage[_-]info\b|^wokwi-cli\b'
     reason: Builds or simulates. Produces artefacts, changes no device.
 
   - tier: 1
     name: slice
-    match: 'orcaslicer|prusa-slicer-console|CuraEngine'
+    match: '^(orcaslicer|prusa-slicer-console|CuraEngine)\b'
     reason: Slicing produces a gcode file. Sending it to a printer is T3.
 
   - tier: 1
     name: read-only-instrument
-    match: 'sigrok-cli|gpioget|i2cdetect|monitor'
+    match: '^(sigrok-cli|gpioget|i2cdetect)\b|^idf\.py\s+monitor\b|^(pio|platformio)\s+device\s+monitor\b'
     reason: Reads from hardware without changing its state.
 
 # Anything that matches no rule is treated as tier 3 (refuse, explain, hand over).
