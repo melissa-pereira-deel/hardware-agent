@@ -1,5 +1,90 @@
 # Changelog
 
+## Unreleased — Phase 2: skills
+
+Every factual claim in the skills now carries a source URL and the date it was
+checked, or is explicitly marked unverified.
+
+### Corrected, with sources
+
+- **WS2812B drive current has no datasheet basis.** Verified by extracting the
+  datasheet directly: it contains zero occurrences of "mA". The 60 mA/LED
+  figure the entire current budget rests on is an inference from the
+  WS2811-family ~18.5 mA/channel design; bench tests measure ~50 mA. Kept 60 mA
+  as the sizing figure — it is the safe end — but relabelled as an assumption
+  to measure rather than a vendor fact. V_IH = 0.7 × VDD *is* datasheet-backed
+  and is now cited as such.
+- **JLCPCB 1–2 layer trace/space** is 4/4 mil (0.10 mm), not 5 mil.
+- **JLCPCB annular ring.** The flat "0.15 mm" previously asserted matches
+  neither published figure (PTH ≥0.20 mm, NPTH ≥0.45 mm, vs a 0.15 mm via in a
+  0.25 mm pad). Wrong in the direction that makes a non-compliant board look
+  compliant. The ambiguity between hole classes is now flagged rather than
+  resolved from memory.
+- **The 70 × 70 mm panelization rule was stated backwards.** It is a *minimum*
+  board size and applies only to Standard PCBA; Economic PCBA accepts 10 × 10
+  mm. For small-batch work this often means no panelization at all.
+- **`idf.py secure-boot-enable` does not exist.** Replaced with the real flow,
+  including the safety-relevant detail the file omitted: `ABS_DONE_1` is burned
+  by the bootloader on *first boot*, so the point of no return is a power-on,
+  not a command you can decline to run.
+- **Flash offsets are part-family specific** (0x1000 on ESP32/S2, 0x0 on
+  C3/C6/H2/S3). The old `write_flash 0x0` example produced a non-booting ESP32
+  classic.
+- **esptool v5** deprecated the `.py` suffixes and moved to hyphenated
+  subcommands.
+- **PLA**: design against heat-deflection temperature (~53 °C), not glass
+  transition (60–65 °C). HDT is lower and is where a loaded part creeps.
+- **ANATEL**: cited Resolução 715/2019 and the actual applicant documentation
+  requirement.
+- **Nexar API limits could not be verified** and are now marked unverified with
+  an explicit instruction not to quote them.
+- **The seeded wiki entry cited a `trust: high` source for a claim it does not
+  make** (ESP32 errata, "chip revision identification", for a brownout
+  failure). Dropped to `confidence: medium`, re-sourced to Espressif's own
+  issue tracker, and the body now explains the mis-citation as the worked
+  example of why a linter cannot catch this. Added the missing `rst:0xf`
+  symptom — an incomplete symptom list is invisible to grep, which is the
+  entire retrieval strategy.
+
+### Changed
+
+- **Merged `research-and-ingest` into `knowledge-base`** (decision 1). Six
+  skills become five. They were one pipeline split at exactly the seam where
+  provenance got dropped.
+- **Fetch tooling** now defaults to `httpx`/`trafilatura`/`pymupdf` for the
+  static vendor PDFs that are the real workload, with Firecrawl's hosted MCP as
+  the escape hatch (decision 4). No self-hosted crawler.
+- **Added `skills/sourcing-bom/references/lcsc-jlcpcb-parts.md`**, shared by
+  `sourcing-bom` and `manufacturing-dfm`, so the basic/extended overlap lives
+  in one file rather than drifting in two. Documents the $3-per-unique-extended
+  -part feeder fee and the Preferred Extended class that waives it on Economic.
+- **`entry-schema.md` no longer inlines a copy of the worked example.** The
+  copy had already drifted from the real entry. It now points at the file.
+- Skill descriptions rewritten for triggering (below).
+
+### Added
+
+- `harness/check_skill_routing.py` and `just check-routing`. Scores realistic
+  prompts against each skill's YAML description. A proxy for the real matcher,
+  but it catches the failure that actually happens: a description missing the
+  vocabulary a prompt uses. It found four misses, two of them among your five
+  smoke tests, and one a regression the merge had just introduced.
+- A test asserting every `SKILL.md` frontmatter parses and its `name` matches
+  its directory. Added after an unquoted `": "` inside a description broke the
+  YAML of three skills at once — which would have stopped them loading
+  entirely.
+
+### Known and deliberate
+
+- Efficacy figures (30–40 lm/W addressable vs 120–160 lm/W for 2835) are
+  `trust: medium`: corroborated across industry sources, but no manufacturer
+  publishes a lm/W figure for the WS2812B. The mechanism is sound; the exact
+  numbers are not vendor-backed and are labelled that way.
+- `AGENT.md` and `policy/guardrails.md` still overlap substantially on the
+  safety stances. `REVIEW.md` §3 called this over-built; on reflection,
+  duplicated safety content is defensible redundancy and removing it was not
+  among the decisions you signed off. Left alone.
+
 ## Unreleased — Phase 1: repo setup and harness correctness
 
 Phase 0 produced `REVIEW.md`. This is the work that followed from it. Skills

@@ -54,70 +54,58 @@ set `confidence: low`.
 
 ## Worked example
 
-`wiki/hardware/fm-esp32-brownout-boot-loop.md`:
+The canonical example is a real file, not a copy in this document:
+**`wiki/hardware/fm-esp32-brownout-boot-loop.md`**. Read that one.
 
-```markdown
+This document previously inlined a full copy of it. The two drifted — the
+inline copy kept a `trust: high` citation to an errata section that does not
+discuss the failure, long after the real entry was corrected. A schema
+reference that duplicates its example teaches the stale version. So: frontmatter
+shape below, real content in the wiki.
+
+```yaml
 ---
-id: fm-esp32-brownout-boot-loop
+id: fm-esp32-brownout-boot-loop      # matches filename
 type: failure_mode
 title: ESP32 brownout boot loop under LED inrush
 applies_to:
   part: ESP32-WROOM-32
   silicon_revision: "all"
-symptom:
+  framework: "esp-idf >=4.0, arduino-esp32 >=2.0"
+symptom:                              # verbatim, and COMPLETE
   - "boot loop"
   - "Brownout detector was triggered"
   - "rst:0xc (SW_CPU_RESET)"
-severity: 6       # loss of function, no safety hazard
-occurrence: 7     # common on USB power with LED loads
-detection: 3      # obvious in the serial log
-rpn: 126
-confidence: high  # reproduced on bench + vendor doc for the detector
+  - "rst:0xf (RTCWDT_BROWN_OUT_RESET)"
+severity: 6                           # 1-10, yours
+occurrence: 7                         # 1-10, yours
+detection: 3                          # 1-10, yours
+rpn: 126                              # = 6 * 7 * 3
+confidence: medium
 sources:
-  - title: "ESP32 Series SoC Errata"
-    publisher: Espressif
-    url: https://docs.espressif.com/projects/esp-chip-errata/en/latest/esp32/
-    revision: "latest, retrieved rev noted below"
-    section: "chip revision identification"
+  - title: "Wrong reset cause on brownout"
+    publisher: Espressif (esp-idf issue tracker)
+    url: https://github.com/espressif/esp-idf/issues/10834
+    section: "issue #10834"
     retrieved: 2026-09-14
-    trust: high
-  - title: "Forum thread - brownout on WS2812 inrush"
-    publisher: esp32.com (community)
-    url: https://example-forum-thread
-    retrieved: 2026-09-14
-    trust: low
-related: [test-3v3-rail-sag, fix-add-bulk-cap-3v3]
+    trust: medium
+related: [fm-ws2812-level-shift]
 updated: 2026-09-14
 ---
-
-# ESP32 brownout boot loop under LED inrush
-
-## Symptom
-Board resets repeatedly at boot. Serial at 115200 shows
-`Brownout detector was triggered` and a reset reason of `rst:0xc`.
-Most often when driving WS2812 strips, or on a thin USB cable.
-
-## Mechanism
-The 3V3 rail sags below the brownout threshold during current inrush - radio TX
-or LED turn-on - which trips the brownout detector, resets the chip, and repeats.
-This is the detector working correctly. It is a power problem wearing a
-firmware problem's clothes.
-
-## Diagnosis
-1. Read serial. Confirm the brownout message. If absent, this entry does not apply.
-2. Measure 3V3 under load. A dip below ~3.0 V confirms rail sag.
-3. Power from a bench supply. If the loop stops, confirmed.
-
-## Fixes
-- Add bulk capacitance on 3V3 near the module (470-1000 uF).
-- Use a supply and cable rated for the inrush; thin USB cables are a common cause.
-- Level-shift the LED data line while you are in there - see fm-ws2812-level-shift.
-
-## Notes on confidence
-Severity/occurrence/detection are MY estimates from bench experience, not vendor
-figures. The brownout detector behaviour is vendor-documented. The specific
-WS2812 inrush correlation is corroborated by community reports only.
 ```
+
+### Two things that example is teaching
+
+**Symptom lists must be complete, not merely correct.** Both reset codes are
+listed because both occur — the brownout handler resets via the watchdog, so
+the code is sometimes `rst:0xc`. An entry listing only one is invisible to
+someone grepping the other, and grep is the entire retrieval strategy.
+
+**`confidence` tracks what the sources actually support.** That entry is
+`medium` and says why in its body: no vendor document has been read that
+supports the specific claim. The linter cannot catch a `trust: high` source
+cited for a claim it does not make — only you can. Dropping confidence is
+always available and always cheaper than being wrong.
 
 ## What makes this greppable
 
