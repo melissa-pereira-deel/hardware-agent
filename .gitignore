@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# risk-broker audit log: local operational record, not source
+.audit.jsonl
+*.audit.jsonl
+
+# Local editor / tooling
+.idea/
+.vscode/

@@ -1,0 +1,170 @@
+# Tool risk tiers for the hardware-prototyper agent.
+# Loaded by harness/risk_broker. Order matters: the FIRST matching rule wins,
+# so T3 patterns are listed before T2, and T2 before T1.
+#
+# T1 autonomous      - read / analyse / simulate / generate. No device state, no money.
+# T2 confirm-first   - writes to a connected device. Reversible by re-flashing.
+# T3 advisory-only   - irreversible, physical hazard, money, motion, or regulatory.
+
+version: 1
+
+binaries_allowed:
+  # Anything not on this list is refused outright, whatever tier it would match.
+  - kicad-cli
+  - kikit
+  - python
+  - python3
+  - ngspice
+  - gerbv
+  - arduino-cli
+  - pio
+  - platformio
+  - idf.py
+  - esptool.py
+  - esptool
+  - espefuse.py
+  - espefuse
+  - esphome
+  - wokwi-cli
+  - openocd
+  - probe-rs
+  - pyocd
+  - picotool
+  - avrdude
+  - orcaslicer
+  - prusa-slicer-console
+  - CuraEngine
+  - sigrok-cli
+  - rg
+  - ripgrep
+  - git
+  - curl
+  - crwl
+  - trafilatura
+  - docling
+  - mlx_vlm
+  - ollama
+
+rules:
+
+  # ---------------------------------------------------------------- T3
+  - tier: 3
+    name: kb-canonicalize
+    match: '\b(cp|mv|tee|rsync|install)\b.*\bwiki/|>>?\s*\S*wiki/|kb[_-]?canonicalize|promote[_-]to[_-]wiki'
+    reason: >
+      Writing to the canonical wiki mutates shared state that every other agent
+      reads. A wrong entry propagates silently and later sessions cite it as
+      ground truth. Requires lint pass plus a human reading the diff.
+    see: skills/knowledge-base/references/trust-and-provenance.md
+
+  - tier: 3
+    name: bulk-crawl
+    match: 'crawl.*--depth|--max-pages|spider|scrapy\s+crawl'
+    reason: >
+      Bulk crawling creates the legal exposure, fills the KB with staleness, and
+      burdens the sites you depend on. Fetch one document on demand instead.
+    see: skills/research-and-ingest/references/legal-and-etiquette.md
+
+  # ---------------------------------------------------------------- T3
+  - tier: 3
+    name: efuse-burn
+    match: 'espefuse|burn_key|burn_efuse|burn_bit'
+    reason: >
+      eFuse bits are one-time programmable and only change 0 to 1. A wrong burn
+      permanently bricks the chip or locks out all future firmware updates.
+    see: skills/firmware/references/esp32-irreversible.md
+
+  - tier: 3
+    name: secure-boot-or-flash-encryption
+    match: 'secure-boot|secure_boot|flash[_-]encryption|--encrypt'
+    reason: >
+      Enabling secure boot or flash encryption is irreversible and removes the
+      serial recovery path. Enable only after OTA is proven end to end.
+    see: skills/firmware/references/esp32-irreversible.md
+
+  - tier: 3
+    name: avr-fuse-write
+    match: 'avrdude.*-U\s+(l|h|e)fuse:w'
+    reason: >
+      Wrong fuse settings can make the chip unreachable without a
+      high-voltage programmer.
+
+  - tier: 3
+    name: spend-money
+    match: 'checkout|place[_-]?order|cart/submit|jlcpcb.*order|pcbway.*order'
+    reason: Placing an order spends money. Prepare the quote, then stop.
+
+  - tier: 3
+    name: machine-motion
+    match: 'gcode.*send|printer.*print|cnc|grbl|laser'
+    reason: >
+      Sending a job to a printer, CNC or laser starts unattended physical
+      motion with fire and injury risk.
+
+  # ---------------------------------------------------------------- T2
+  - tier: 2
+    name: outbound-fetch
+    match: 'crwl|crawl4ai|firecrawl|trafilatura|curl\s+http|playwright'
+    reason: >
+      Nominally a read, but it hits third-party servers, consumes their
+      bandwidth and can implicate terms of service. Rate-limit and identify
+      yourself.
+    see: skills/research-and-ingest/references/legal-and-etiquette.md
+
+  - tier: 2
+    name: scratch-write
+    match: 'scratch/'
+    reason: >
+      Draft tier. Cheap and disposable, but still a write - keep it out of the
+      canonical tree.
+
+  - tier: 2
+    name: flash-firmware
+    match: 'write_flash|erase_flash|-t\s+upload|\bupload\b|esphome\s+run|idf\.py\s+flash'
+    reason: >
+      Writes firmware to a connected device. Reversible only if the device is
+      physically reachable and has a working bootloader.
+
+  - tier: 2
+    name: debugger-write
+    match: 'openocd|probe-rs\s+(run|download|erase)|pyocd\s+(flash|erase)|picotool\s+(load|erase)'
+    reason: Programs, halts or resets a live target.
+
+  - tier: 2
+    name: device-io-write
+    match: 'gpioset|i2cset|spi_write|bleak.*write|mosquitto_pub'
+    reason: Drives real pins or writes to a live device or broker.
+
+  # ---------------------------------------------------------------- T1
+  - tier: 1
+    name: kb-search
+    match: '\brg\b|ripgrep|grep|lint\.py'
+    reason: Reading and linting the local wiki. Touches nothing external.
+
+  - tier: 1
+    name: local-extract
+    match: 'docling|mlx_vlm|ollama|pymupdf'
+    reason: Local document extraction. No network, no device, no cost.
+
+  - tier: 1
+    name: eda
+    match: 'kicad-cli|kikit|gerbv|ngspice'
+    reason: Design-file generation and analysis. Touches no hardware.
+
+  - tier: 1
+    name: build
+    match: 'compile|pio run$|idf\.py build|esphome compile|image_info|wokwi-cli'
+    reason: Builds or simulates. Produces artefacts, changes no device.
+
+  - tier: 1
+    name: slice
+    match: 'orcaslicer|prusa-slicer-console|CuraEngine'
+    reason: Slicing produces a gcode file. Sending it to a printer is T3.
+
+  - tier: 1
+    name: read-only-instrument
+    match: 'sigrok-cli|gpioget|i2cdetect|monitor'
+    reason: Reads from hardware without changing its state.
+
+# Anything that matches no rule is treated as tier 3 (refuse, explain, hand over).
+default_tier: 3

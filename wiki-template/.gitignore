@@ -1,0 +1,9 @@
+.DS_Store
+*.tmp
+__pycache__/
+
+# raw/ is cached third-party documents. Decide deliberately whether these
+# belong in git history. Tracking them makes the wiki self-contained and
+# reproducible; it also means copyrighted PDFs live in your history forever.
+# Uncomment to keep them local-only:
+# raw/
