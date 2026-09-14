@@ -35,7 +35,14 @@ PART_SOURCE_ADVISED = ["sha256"]
 TYPES = {"failure_mode", "part", "procedure", "device"}
 CONFIDENCE = {"high", "medium", "low"}
 TRUST = {"high", "medium", "low"}
-SOURCE_REQUIRED = ["url", "publisher", "retrieved"]
+SOURCE_REQUIRED = ["publisher", "retrieved"]
+# A document source needs a URL. A bench source cannot have one - and
+# trust-and-provenance.md says bench reproduction is a route to confidence:
+# high, so forbidding it structurally would push your strongest evidence into
+# prose where rg cannot find it. Bench sources trade the URL for a method.
+SOURCE_KINDS = {"document", "bench"}
+DOCUMENT_SOURCE_REQUIRED = ["url"]
+BENCH_SOURCE_REQUIRED = ["method"]
 
 
 def parse_front_matter(path: Path) -> tuple[dict | None, str | None]:
@@ -66,7 +73,17 @@ def as_date(value) -> date | None:
         return None
 
 
-def check(path: Path, root: Path, stale_days: int) -> list[dict]:
+def collect_ids(root: Path) -> set[str]:
+    """Every entry id present in the tree, for resolving `related` links."""
+    ids = set()
+    for p in root.rglob("*.md"):
+        if p.name in {"INDEX.md", "README.md"}:
+            continue
+        ids.add(p.stem)
+    return ids
+
+
+def check(path: Path, root: Path, stale_days: int, known_ids: set[str] | None = None) -> list[dict]:
     problems: list[dict] = []
 
     def err(msg: str, level: str = "error") -> None:
@@ -111,6 +128,22 @@ def check(path: Path, root: Path, stale_days: int) -> list[dict]:
             for field in SOURCE_REQUIRED:
                 if not src.get(field):
                     err(f"sources[{i}] missing '{field}'")
+
+            kind = src.get("kind", "document")
+            if kind not in SOURCE_KINDS:
+                err(f"sources[{i}] kind must be one of {sorted(SOURCE_KINDS)}, got '{kind}'")
+            elif kind == "bench":
+                for field in BENCH_SOURCE_REQUIRED:
+                    if not src.get(field):
+                        err(
+                            f"sources[{i}] is kind: bench but has no '{field}' - "
+                            f"what was measured, and how? A bench claim nobody can "
+                            f"repeat is not evidence."
+                        )
+            else:
+                for field in DOCUMENT_SOURCE_REQUIRED:
+                    if not src.get(field):
+                        err(f"sources[{i}] missing '{field}'")
             trust = src.get("trust")
             if trust and trust not in TRUST:
                 err(f"sources[{i}] trust must be one of {sorted(TRUST)}, got '{trust}'")
@@ -159,6 +192,23 @@ def check(path: Path, root: Path, stale_days: int) -> list[dict]:
         if fm.get("symptom") and not isinstance(fm["symptom"], list):
             err("symptom must be a list of searchable strings")
 
+    # related: a link to an entry that does not exist is a broken index.
+    # Warning, not error: writing `related` ahead of the entry it names is a
+    # reasonable way to mark work, and a gate that blocks it costs more than
+    # it saves.
+    related = fm.get("related")
+    if related is not None and known_ids is not None:
+        if not isinstance(related, list):
+            err("related must be a list of entry ids")
+        else:
+            for target in related:
+                if target not in known_ids:
+                    err(
+                        f"related entry '{target}' does not exist - "
+                        f"anyone following that link finds nothing",
+                        level="warning",
+                    )
+
     # staleness
     updated = as_date(fm.get("updated"))
     if fm.get("updated") and updated is None:
@@ -186,9 +236,11 @@ def main() -> int:
     files = sorted(args.root.rglob("*.md"))
     files = [f for f in files if f.name not in {"INDEX.md", "README.md"}]
 
+    known_ids = collect_ids(args.root)
+
     problems: list[dict] = []
     for path in files:
-        problems.extend(check(path, args.root, args.stale))
+        problems.extend(check(path, args.root, args.stale, known_ids))
 
     errors = [p for p in problems if p["level"] == "error"]
     warnings = [p for p in problems if p["level"] == "warning"]

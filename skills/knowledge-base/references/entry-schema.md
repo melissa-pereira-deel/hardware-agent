@@ -13,6 +13,25 @@ needing a database.
 | `procedure` | `wiki/hardware/` | "How do I do this maintenance/repair task?" |
 | `device` | `wiki/hardware/` | "What is this machine, what fails on it, what are its docs?" |
 
+## Source kinds
+
+Every source is `kind: document` (the default) or `kind: bench`.
+
+| kind | Requires | Notes |
+|---|---|---|
+| `document` | `url`, `publisher`, `retrieved` | Plus `revision` when the entry is a `part` |
+| `bench` | `method`, `publisher`, `retrieved` | No `url`. `method` must be repeatable. |
+
+A bench source can support `confidence: high` — see
+`trust-and-provenance.md` rule 5a.
+
+## `related` links are checked
+
+The linter warns when a `related` entry does not exist, because a link to
+nothing is a broken index and this wiki is retrieved by grep. It is a warning
+rather than an error: writing `related` ahead of the entry it names is a
+reasonable way to mark intended work.
+
 ## Required frontmatter fields
 
 ```yaml

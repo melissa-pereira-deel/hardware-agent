@@ -42,6 +42,30 @@ A reader six months from now cannot tell otherwise, and that reader is you.
 **5. Retrieval date on everything.** Not because it proves correctness, but
 because it makes staleness queryable instead of invisible.
 
+**5a. Your bench is a first-class source.** A measurement you took is evidence,
+and the schema records it as such rather than burying it in prose:
+
+```yaml
+sources:
+  - title: "Bench reproduction, 2026-09-14"
+    kind: bench            # no url required - there isn't one
+    publisher: own bench
+    method: "1 m 60 LED/m WS2812B at full white; measured 3V3 at the module pin
+             with a DMM while commanding all channels to 255; rail sagged to
+             2.87 V and the brownout message appeared within 200 ms."
+    retrieved: 2026-09-14
+    trust: high
+```
+
+`method` is required and is the whole point: a bench claim nobody can repeat is
+not evidence, it is an anecdote. Say what you measured, with what, under what
+load, and what you saw.
+
+This exists because the linter used to require a `url` on every source, which
+made the route this document has always endorsed — "reproduced on the bench
+yourself" — structurally impossible to record. Your strongest evidence ended up
+in prose where `rg 'trust: high'` could not find it.
+
 **6. Never store a fact you cannot attribute.** If provenance was lost during
 extraction, the fact does not enter `wiki/`. Go back and get it, or drop it.
 

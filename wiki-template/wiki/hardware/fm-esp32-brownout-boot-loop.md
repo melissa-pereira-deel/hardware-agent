@@ -29,7 +29,6 @@ sources:
     url: https://esp32.com/
     retrieved: 2026-09-14
     trust: low
-related: [fm-ws2812-level-shift]
 updated: 2026-09-14
 ---
 

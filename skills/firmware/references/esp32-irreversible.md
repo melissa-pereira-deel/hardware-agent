@@ -41,6 +41,33 @@ present. That is the detail that matters for safety: the point of no return is
 a *power-on*, not a command you can decide not to run. Once that board boots,
 it is done.
 
+**So the flash is the gate, not the eFuse command.**
+
+This is the operationally important consequence and it inverts the usual tier
+logic. Flashing a bootloader is normally T2 — reversible, you re-flash. But
+flashing a bootloader *built with secure boot or flash encryption enabled* is
+**T3**, because the next power-on burns the eFuse and there is no command left
+to decline. The command line looks identical either way:
+
+```bash
+esptool --port <PORT> write-flash 0x0 bootloader.bin    # T2 or T3 - the
+idf.py -p <PORT> flash                                   # command cannot tell you
+```
+
+Nothing in that text distinguishes the two cases; the difference lives in
+`sdkconfig`. So neither the risk broker nor a reader of the command can
+classify it. **You have to know what you built.** Before flashing any
+bootloader to a unit you care about, check:
+
+```bash
+grep -E "SECURE_BOOT|FLASH_ENC" sdkconfig
+```
+
+If either is enabled, treat the flash as T3: hand it over, do not execute it.
+`run_device_write` enforces the disclosure half of this — it refuses a
+bootloader flash whose `what_changes` does not state secure-boot and
+flash-encryption status.
+
 The real `idf.py` security subcommands are `secure-generate-signing-key`,
 `secure-sign-data` and `secure-verify-signature`. None of them burn anything.
 

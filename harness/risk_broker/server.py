@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -42,6 +43,17 @@ from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
 from .tiers import Policy
+
+# A bootloader flash is normally T2. But flashing a bootloader built with
+# secure boot or flash encryption enabled is irreversible - the next power-on
+# burns the eFuse - and the command text is identical either way. The broker
+# cannot tell them apart, so it requires the caller to say which it is.
+BOOTLOADER_FLASH = re.compile(
+    r"\bbootloader\.bin\b|\bwrite[_-]flash\b.*\b0x0*(0|1000)\b|^idf\.py\b.*\bflash\b",
+    re.IGNORECASE,
+)
+SECURE_BOOT_DISCLOSED = re.compile(r"secure[\s_-]?boot", re.IGNORECASE)
+FLASH_ENC_DISCLOSED = re.compile(r"flash[\s_-]?encrypt|encrypt", re.IGNORECASE)
 
 mcp = MCPServer(
     "risk-broker",
@@ -202,6 +214,39 @@ def run_device_write(
             "refused": True,
             "why": "device, what_changes and recovery must all be stated.",
         }
+
+    # Bootloader flashes must state secure-boot and flash-encryption status.
+    # See skills/firmware/references/esp32-irreversible.md: the flash is the
+    # point of no return, and the command text cannot reveal which case it is.
+    if BOOTLOADER_FLASH.search(command.strip()):
+        disclosed = SECURE_BOOT_DISCLOSED.search(what_changes) and FLASH_ENC_DISCLOSED.search(
+            what_changes
+        )
+        if not disclosed:
+            _audit(
+                tool="run_device_write",
+                command=command,
+                outcome="refused-undisclosed-bootloader-flash",
+            )
+            return {
+                "refused": True,
+                "why": (
+                    "This flashes a bootloader, and 'what_changes' does not state "
+                    "secure-boot and flash-encryption status.\n\n"
+                    "A bootloader flash is normally reversible. A bootloader built "
+                    "with secure boot or flash encryption enabled is NOT: the next "
+                    "power-on burns the eFuse and there is no command left to "
+                    "decline. The command line is identical in both cases - the "
+                    "difference is in sdkconfig, which this broker cannot see.\n\n"
+                    "Check it, then say so explicitly:\n"
+                    "    grep -E 'SECURE_BOOT|FLASH_ENC' sdkconfig\n\n"
+                    "If either is enabled this is T3: use plan_irreversible and hand "
+                    "the command over. If neither is, restate what_changes saying so "
+                    "- e.g. 'secure boot disabled, flash encryption disabled, "
+                    "ordinary bootloader flash'."
+                ),
+                "read_first": "skills/firmware/references/esp32-irreversible.md",
+            }
 
     c = policy.classify(command)
 
