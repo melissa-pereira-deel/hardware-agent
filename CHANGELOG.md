@@ -1,5 +1,50 @@
 # Changelog
 
+## Unreleased — Phase 4: smoke tests
+
+Five cold agents, one per prompt, no memory of the session that wrote the
+skills. **All five pass.** Full transcripts and verdicts in
+`harness/smoke/RESULTS.md`; method in `harness/smoke/README.md`.
+
+The corrections from Phases 2 and 3 propagated intact to agents that had never
+seen this session — the "WS2812B datasheet has no current spec" finding, the
+`rst:0xc`/`rst:0xf` discrepancy, the corrected 70 × 70 mm panelization rule, and
+the unverified Nexar markings, which were respected rather than filled from
+memory.
+
+### Fixed — three defects the runs found
+
+- **`lint.py` required a `url` on every source**, while
+  `trust-and-provenance.md` has always said `confidence: high` is earned by
+  "vendor-authoritative source, **or reproduced on the bench yourself**". A
+  bench measurement has no URL, so the strongest evidence available was the one
+  thing the schema could not record — it ended up in prose where
+  `rg 'trust: high'` would never find it. Sources now carry `kind: document`
+  (default, needs `url`) or `kind: bench` (needs `method` instead). `method` is
+  required: a bench claim nobody can repeat is an anecdote, not evidence.
+- **`related:` targets were never validated.** The seeded entry linked to
+  `fm-ws2812-level-shift`, which does not exist. Now a warning — a link to
+  nothing is a broken index in a wiki retrieved by grep — and a warning rather
+  than an error because writing `related` ahead of the entry it names is a
+  reasonable way to mark intended work. Dangling link removed from the template.
+- **The secure-boot gap.** Flashing a bootloader built with secure boot enabled
+  is irreversible on the next power-on, but its command text is identical to an
+  ordinary flash, so the broker classified it T2. Fixed as agreed — **skill
+  stance plus mandatory disclosure**, not a new T3 rule that would fire on every
+  bring-up. `run_device_write` now refuses a bootloader flash whose
+  `what_changes` does not state secure-boot and flash-encryption status, and
+  `esp32-irreversible.md` documents that the flash is the gate, with the
+  `grep -E "SECURE_BOOT|FLASH_ENC" sdkconfig` that tells you which case you are
+  in.
+
+### Added
+
+- `harness/smoke/` — prompts, method, failure criteria and recorded verdicts.
+- `harness/tests/test_device_write.py` — 13 tests pinning the disclosure
+  requirement, including that it does *not* fire on ordinary app flashes (a
+  guardrail that noisy gets routed around) and that disclosure never bypasses
+  the tier rules.
+
 ## Unreleased — Phase 3: the wiki
 
 The wiki now exists at `~/dev/wiki-hardware` as its own git repo, with a
