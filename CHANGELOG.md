@@ -1,5 +1,71 @@
 # Changelog
 
+## Unreleased — Phase 3: the wiki
+
+The wiki now exists at `~/dev/wiki-hardware` as its own git repo, with a
+working gate and one real ingested entry sitting in `scratch/` awaiting review.
+**Nothing was canonicalised.** `wiki/parts/` still contains only `.gitkeep`.
+
+### Fixed — `harness/kb/bootstrap.sh`
+
+Eight defects in 49 lines, in a script that had never been run.
+
+- **`git init`/`add`/`commit` ran before the hook was installed**, so the seeded
+  entry — the template every later entry imitates — entered the wiki having
+  never been linted. Gate installs first now; verified that the bootstrap
+  commit itself goes through the linter.
+- **The hook's lint path did not resolve.** Baked in as an absolute path at
+  bootstrap time.
+- **The hook failed open.** `if command -v python3` meant no python3 → exit 0 →
+  the gate silently vanished. It now fails loudly, and distinguishes a missing
+  linter (an installation problem) from failing entries (yours). Verified by
+  pointing it at a nonexistent linter: commit blocked, cause named correctly.
+- `git init -b main` rather than depending on global config; `wiki/parts/.gitkeep`
+  added; the stale "edit the lint path" instruction removed.
+
+### Added
+
+- **`raw/` is gitignored, `raw/MANIFEST.tsv` is not.** Decision 3 kept
+  copyrighted PDFs out of history; the manifest keeps the *record* of what was
+  fetched — filename, URL, publisher, sha256, retrieval date — so a fresh clone
+  can still say what was read and verify a re-fetch against the hash.
+- **`harness/kb/deny_wiki_write.py`**, a `PreToolUse` hook registered
+  user-scoped in `~/.claude/settings.json` (backed up first), refusing
+  Write/Edit into the wiki tree. This closes the gap REVIEW §5 identified:
+  `tool-tiers.yaml`'s `kb-canonicalize` rule only sees shell commands, and the
+  agent writes files with the Write tool, which never reaches the broker.
+  `scratch/` stays freely writable.
+- **`harness/tests/test_lint.py`** — 19 tests driving `lint.py` as a subprocess,
+  because the exit code is the contract the pre-commit hook gates on.
+
+### Changed — what the real datasheet forced
+
+The schema held. The **linter** did not: the draft passed cleanly while
+carrying provenance the linter never checked for. Two rules now apply to
+`trust: high` sources on `type: part` entries:
+
+- **`revision` required (error).** A datasheet citation without one is an
+  unscoped fact wearing a citation. v1.4 is a different document from v1.1.
+- **`sha256` advised (warning).** It makes a silent vendor revision detectable
+  via the manifest, but requiring it would block an entry drawn from a document
+  read without caching — and a gate that blocks honest work is how a KB dies.
+
+`entry-schema.md` now documents the part conventions, including the one the
+ingest actually taught: **specs go in a body table with a Source column, and
+the empty columns stay empty.** The datasheet gives `IOH` as *typical* with no
+maximum, so "max current per GPIO is 40 mA" is not a claim it supports. A
+schema that flattened that to `io_max_current_ma: 40` would have manufactured
+a limit the vendor never stated.
+
+### Ingested
+
+`scratch/part-esp32-c6-wroom-1.md` — ESP32-C6-WROOM-1/1U, datasheet v1.4,
+sha256 recorded. Carries the supply minimum (0.5 A, the spec people miss), RF
+peak currents (382 mA Wi-Fi TX), GPIO drive with its conditions and footnotes,
+and the `-1U` external-antenna gain ceiling of 2.33 dBi — which cross-links to
+the ANATEL rule on what invalidates a homologation. It also records what was
+*not* read: the ESP32-C6 SoC datasheet and TRM.
+
 ## Unreleased — Phase 2: skills
 
 Every factual claim in the skills now carries a source URL and the date it was

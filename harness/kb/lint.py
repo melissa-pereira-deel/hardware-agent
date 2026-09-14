@@ -24,6 +24,14 @@ import yaml
 
 REQUIRED = ["id", "type", "title", "applies_to", "confidence", "sources", "updated"]
 FAILURE_MODE_REQUIRED = ["symptom", "severity", "occurrence", "detection", "rpn"]
+# A part entry's whole value is datasheet numbers. A datasheet citation with no
+# revision is an unscoped fact wearing a citation - vendors revise silently, and
+# v1.4 of a datasheet is a different document from v1.1.
+PART_SOURCE_REQUIRED = ["revision"]
+# sha256 of the cached document is a warning, not an error: it enables change
+# detection against raw/MANIFEST.tsv, but demanding it would block an entry
+# drawn from a document you read without caching.
+PART_SOURCE_ADVISED = ["sha256"]
 TYPES = {"failure_mode", "part", "procedure", "device"}
 CONFIDENCE = {"high", "medium", "low"}
 TRUST = {"high", "medium", "low"}
@@ -106,6 +114,21 @@ def check(path: Path, root: Path, stale_days: int) -> list[dict]:
             trust = src.get("trust")
             if trust and trust not in TRUST:
                 err(f"sources[{i}] trust must be one of {sorted(TRUST)}, got '{trust}'")
+            # Vendor-document citations on a part entry must be revision-scoped.
+            if entry_type == "part" and trust == "high":
+                for field in PART_SOURCE_REQUIRED:
+                    if not src.get(field):
+                        err(
+                            f"sources[{i}] is trust: high on a part entry but has no "
+                            f"'{field}' - which revision of the document is this?"
+                        )
+                for field in PART_SOURCE_ADVISED:
+                    if not src.get(field):
+                        err(
+                            f"sources[{i}] has no '{field}'; a cached document hash "
+                            f"makes a silent vendor revision detectable",
+                            level="warning",
+                        )
             if trust == "high":
                 highest_trust = "high"
             elif trust == "medium" and highest_trust != "high":

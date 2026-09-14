@@ -107,6 +107,64 @@ supports the specific claim. The linter cannot catch a `trust: high` source
 cited for a claim it does not make — only you can. Dropping confidence is
 always available and always cheaper than being wrong.
 
+## `part` entries — extra rules, learned the hard way
+
+The first real ingest (ESP32-C6-WROOM-1 datasheet v1.4) found that the schema
+held but the *linter* was too permissive for parts. Two rules now apply to any
+source on a `type: part` entry carrying `trust: high`:
+
+```yaml
+sources:
+  - title: "ESP32-C6-WROOM-1 & ESP32-C6-WROOM-1U Datasheet"
+    publisher: Espressif Systems
+    url: https://...
+    revision: "v1.4"        # REQUIRED on part entries. Error if missing.
+    section: "Tables 6-1 to 6-6; Sections 3.1, 10"
+    retrieved: 2026-09-14
+    sha256: "163020..."      # Advised. Warning if missing.
+    trust: high
+```
+
+**`revision` is required** because a datasheet citation without one is an
+unscoped fact wearing a citation. Vendors revise silently; v1.4 is a different
+document from v1.1, and "the ESP32-C6 does X" is exactly the sentence
+`applies_to` exists to prevent.
+
+**`sha256` is advised, not required.** It is the hash of the cached PDF and it
+resolves through `raw/MANIFEST.tsv`, which makes a silent vendor revision
+*detectable* — re-fetch, re-hash, compare. It is a warning rather than an error
+because requiring it would block an entry drawn from a document you read
+without caching, and a gate that blocks honest work is how a KB dies.
+
+### Specs go in the body as a table with a Source column
+
+Not in frontmatter. A part entry's numbers each need their own page/table
+citation, and nesting that in YAML produces something unreadable that nobody
+maintains. This stays greppable and stays honest:
+
+```markdown
+| Spec | Min | Typ | Max | Unit | Source |
+|---|---|---|---|---|---|
+| IOH high-level source current | — | **40** | — | mA | Table 6-3, p26 |
+```
+
+**Keep the empty columns empty.** That row is the whole argument: the datasheet
+gives IOH as *typical* with no maximum, so "max current per GPIO is 40 mA" is
+not something the document supports. A schema that flattened this to
+`io_max_current_ma: 40` would have manufactured a limit the vendor never
+stated. Reproduce the table's shape, including its silences.
+
+Record the conditions and footnotes next to the table, not as an afterthought —
+"40 mA at PAD_DRIVER = 3, measured into a high-impedance load" is a different
+claim from "40 mA".
+
+### Say what you did not read
+
+The module datasheet defers electrical detail to the SoC datasheet and TRM. An
+entry built from one document should state which documents it did *not* consult
+and what therefore is not covered. A reader six months out cannot otherwise
+tell the difference between "not true of this part" and "not looked up".
+
 ## What makes this greppable
 
 Because symptoms are verbatim strings in frontmatter, `rg "rst:0xc" wiki/`

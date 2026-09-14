@@ -200,3 +200,45 @@ def test_index_and_readme_are_skipped(tmp_path: Path) -> None:
 def test_missing_directory_exits_two(tmp_path: Path) -> None:
     r = run_lint(tmp_path / "does-not-exist")
     assert r.returncode == 2
+
+
+# ---------------------------------------------- part-entry provenance rules
+
+
+def test_part_entry_high_trust_source_requires_revision(tmp_path: Path) -> None:
+    """A datasheet citation with no revision is an unscoped fact wearing a
+    citation. Vendors revise silently; v1.4 is a different document from v1.1."""
+    write(tmp_path, "part-test-good.md", GOOD_PART.replace('    revision: "v1.3"\n', "", 1))
+    r = run_lint(tmp_path)
+    assert r.returncode == 1, r.stdout
+    assert "has no 'revision'" in r.stdout
+
+
+def test_part_entry_missing_sha256_warns_but_passes(tmp_path: Path) -> None:
+    """sha256 is advisory: it enables change detection against raw/MANIFEST.tsv,
+    but requiring it would block an entry drawn from a document read uncached."""
+    content = "\n".join(
+        line for line in GOOD_PART.splitlines() if not line.strip().startswith("sha256:")
+    ) + "\n"
+    write(tmp_path, "part-test-good.md", content)
+    r = run_lint(tmp_path)
+    assert r.returncode == 0, r.stdout
+    assert "1 warnings" in r.stdout
+    assert "sha256" in r.stdout
+
+
+def test_revision_rule_does_not_apply_to_low_trust_sources(tmp_path: Path) -> None:
+    """A forum post has no revision to cite. The rule targets vendor documents."""
+    content = GOOD_PART.replace("trust: high", "trust: low").replace(
+        '    revision: "v1.3"\n', "", 1
+    ).replace("confidence: high", "confidence: low")
+    write(tmp_path, "part-test-good.md", content)
+    r = run_lint(tmp_path)
+    assert r.returncode == 0, r.stdout
+
+
+def test_revision_rule_does_not_apply_to_failure_modes(tmp_path: Path) -> None:
+    """Failure modes cite issue trackers and bench work, not document revisions."""
+    write(tmp_path, "fm-test-good.md", GOOD_FAILURE_MODE)
+    r = run_lint(tmp_path)
+    assert r.returncode == 0, r.stdout
