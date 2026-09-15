@@ -41,6 +41,19 @@ A registration added mid-session does not take effect until a new session -
 verified the hard way on 2026-09-14, when a `touch` into wiki/ succeeded in the
 session that had just registered the Bash matcher.
 
+**Confirmed working in a fresh session, 2026-09-14.** A direct Bash call of
+`touch .../wiki/hardware/CANARY2.md` was refused at PreToolUse, before the
+command reached the shell, and the file was not created:
+
+    PreToolUse:Bash hook error: [python3 .../deny_wiki_write.py]:
+    BLOCKED: write into the canonical wiki -> .../wiki/hardware/CANARY2.md
+
+Note what it took to get that evidence. The skill layer refuses wiki writes so
+reliably that the hook is never reached in normal operation - the first attempt
+at this test ended with the agent classifying through the risk broker and
+declining, which is correct behaviour and tells you nothing about the hook. The
+canary has to explicitly authorise the attempt, or layer 1 hides layer 2.
+
 So `just check-gate` proves this script's logic; it does not prove the hook is
 wired into the session you are in. `python3 harness/kb/check_gate.py --live`
 prints the canary test that does.

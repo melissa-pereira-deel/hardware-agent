@@ -80,6 +80,12 @@ Its logic is covered by `harness/tests/test_deny_hook.py` and `just check-gate`.
 performed inside `just`, `make`, or any script is invisible to it. Do not build
 the canary into a recipe — it would pass regardless.
 
+**Verified live 2026-09-14** in a fresh session: a direct Bash `touch` into
+`wiki/` was refused at PreToolUse and the file was not created. Getting that
+evidence required explicitly authorising the attempt in the prompt — the skill
+layer otherwise refuses first, and a refusal at layer 1 says nothing about
+layer 2.
+
 **Hook registrations load at session start.** A hook added or edited mid-session
 is inert until a new session begins. Do not conclude the gate is live because
 the script refuses a payload you pipe into it by hand — that tests the script,
