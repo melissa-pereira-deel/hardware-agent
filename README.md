@@ -34,6 +34,7 @@ skills/                   circuit-design, firmware, sourcing-bom, manufacturing-
 harness/risk_broker/      MCP server enforcing the tiers in code
 harness/kb/               wiki bootstrap, linter, write gate
 harness/smoke/            five behavioural tests and their recorded results
+TOOLS.md                  tool catalogue: purpose, tier, licence, install
 wiki-template/            scaffold for the knowledge wiki
 ```
 

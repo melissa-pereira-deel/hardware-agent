@@ -48,8 +48,30 @@ binaries_allowed:
   - sigrok-cli
   - rg
   - ripgrep
+  - grep
   - git
   - curl
+  - wget
+  - httpx
+  # KiCad ecosystem
+  - kibot
+  - kicost
+  - pcbdraw
+  # mechanical
+  - openscad
+  - freecad
+  - admesh
+  # bring-up on a Linux host (Raspberry Pi) - not meaningful on macOS,
+  # allowlisted because the rules that classify them already exist and a rule
+  # whose binary is refused is dead code.
+  - gpioget
+  - gpioset
+  - i2cdetect
+  - i2cget
+  - i2cset
+  - mosquitto_pub
+  - mosquitto_sub
+  - pandoc
   - crwl
   - trafilatura
   - docling
@@ -122,7 +144,7 @@ rules:
   # ---------------------------------------------------------------- T2
   - tier: 2
     name: outbound-fetch
-    match: '^(crwl|crawl4ai|firecrawl|trafilatura|curl|wget|httpx)\b|\bplaywright\b'
+    match: '^(crwl|crawl4ai|firecrawl|trafilatura|curl|wget|httpx|kicost)\b|\bplaywright\b'
     reason: >
       Nominally a read, but it hits third-party servers, consumes their
       bandwidth and can implicate terms of service. Rate-limit and identify
@@ -155,6 +177,13 @@ rules:
 
   # ---------------------------------------------------------------- T1
   - tier: 1
+    name: git-read
+    match: '^git\s+(log|diff|status|show|ls-files|blame|rev-parse|describe|remote\s+-v|cat-file)\b'
+    reason: >
+      Reading git history and working-tree state. Changes nothing. Write
+      subcommands are caught earlier by kb-canonicalize or fall through to T3.
+
+  - tier: 1
     name: kb-search
     match: '^(rg|ripgrep|grep)\b|\bharness/kb/lint\.py\b'
     reason: Reading and linting the local wiki. Touches nothing external.
@@ -166,8 +195,17 @@ rules:
 
   - tier: 1
     name: eda
-    match: '^(kicad-cli|kikit|gerbv|ngspice)\b'
-    reason: Design-file generation and analysis. Touches no hardware.
+    match: '^(kicad-cli|kikit|pcbdraw|kibot|gerbv|ngspice)\b'
+    reason: >
+      Design-file generation and analysis. Touches no hardware. kibot drives
+      kicad-cli to produce fab outputs; pcbdraw renders boards.
+
+  - tier: 1
+    name: mechanical
+    match: '^(openscad|freecad|admesh|pandoc)\b'
+    reason: >
+      Geometry and document generation. Produces files, drives no machine -
+      sending geometry to a printer or CNC is T3 machine-motion.
 
   - tier: 1
     name: build

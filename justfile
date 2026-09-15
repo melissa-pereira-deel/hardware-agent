@@ -58,6 +58,10 @@ verify-broker:
 check-routing:
     {{py}} harness/check_skill_routing.py
 
+# Report which allowlisted tools are actually installed.
+doctor:
+    {{py}} harness/doctor.py
+
 # Show what the wiki write gate allows and blocks.
 check-gate:
     {{py}} harness/kb/check_gate.py

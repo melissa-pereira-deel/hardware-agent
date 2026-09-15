@@ -44,13 +44,23 @@ CASES: list[tuple[str, int, str]] = [
     ("gpioset gpiochip0 17=1", 2, "device-io-write"),
     ("mosquitto_pub -t lamp/set -m ON", 2, "device-io-write"),
     # ------------------------------------------------------------------ T1
+    ("git log --oneline", 1, "git-read"),
+    ("git status --short", 1, "git-read"),
+    ("git diff wiki/INDEX.md", 1, "git-read"),
     ("rg -n brownout wiki/", 1, "kb-search"),
+    ("grep -rn brownout wiki/", 1, "kb-search"),
     ("python3 harness/kb/lint.py wiki/", 1, "kb-search"),
     ("docling raw/esp32c6.pdf", 1, "local-extract"),
     ("ollama run qwen2.5", 1, "local-extract"),
     ("kicad-cli pcb drc board.kicad_pcb", 1, "eda"),
     ("ngspice -b sim.cir", 1, "eda"),
     ("kikit panelize board.kicad_pcb panel.kicad_pcb", 1, "eda"),
+    ("kibot -c fab.kibot.yaml -b board.kicad_pcb", 1, "eda"),
+    ("pcbdraw plot board.kicad_pcb render.png", 1, "eda"),
+    ("openscad -o enclosure.stl enclosure.scad", 1, "mechanical"),
+    ("freecad --console script.py", 1, "mechanical"),
+    ("admesh part.stl", 1, "mechanical"),
+    ("kicost -i bom.xml -o costed.xlsx", 2, "outbound-fetch"),
     ("idf.py build", 1, "build"),
     ("arduino-cli compile --fqbn esp32:esp32:esp32c6 .", 1, "build"),
     ("pio run", 1, "build"),
@@ -68,6 +78,38 @@ CASES: list[tuple[str, int, str]] = [
 def test_classification(command: str, tier: int, rule: str) -> None:
     c = policy.classify(command)
     assert (c.tier, c.rule) == (tier, rule), f"{command!r} -> T{c.tier} {c.rule}"
+
+
+# Binaries a rule deliberately names in order to classify them T3, while the
+# allowlist refuses them anyway. Belt and braces, not drift.
+DELIBERATELY_UNLISTED = {
+    "cp", "mv", "tee", "rsync", "install",   # kb-canonicalize
+    "cnc", "spider", "crawl4ai", "firecrawl",  # machine-motion, bulk-crawl
+}
+
+
+def test_rules_and_allowlist_do_not_drift() -> None:
+    """A rule naming a binary the allowlist refuses is dead code.
+
+    These were maintained as two separate lists and drifted: `grep` had a T1
+    rule, `gpioset` and `i2cdetect` had rules, `mosquitto_pub` had a rule -
+    and none were allowlisted, so every one of those rules was unreachable.
+    """
+    import re
+
+    named = set()
+    for _, _, pattern, _, _ in policy.rules:
+        src = pattern.pattern
+        for m in re.finditer(r"\^\(([^)]+)\)\\b", src):
+            named.update(a.replace("\\", "") for a in m.group(1).split("|"))
+        for m in re.finditer(r"\^([a-zA-Z0-9_.\\-]+)\\b", src):
+            named.add(m.group(1).replace("\\", ""))
+
+    orphaned = sorted(b for b in named if b not in policy.allowed and b not in DELIBERATELY_UNLISTED)
+    assert not orphaned, (
+        f"rules name these binaries but binaries_allowed refuses them, "
+        f"so the rules are unreachable: {orphaned}"
+    )
 
 
 def test_every_rule_is_covered() -> None:
