@@ -41,12 +41,17 @@ A registration added mid-session does not take effect until a new session -
 verified the hard way on 2026-09-14, when a `touch` into wiki/ succeeded in the
 session that had just registered the Bash matcher.
 
-**Confirmed working in a fresh session, 2026-09-14.** A direct Bash call of
-`touch .../wiki/hardware/CANARY2.md` was refused at PreToolUse, before the
-command reached the shell, and the file was not created:
+**Confirmed working in a fresh session, 2026-09-14**, on four of the five
+registered surfaces. Each was a direct tool call against a throwaway target in
+wiki/hardware/, each refused at PreToolUse before the tool ran, each left the
+target byte-identical:
 
-    PreToolUse:Bash hook error: [python3 .../deny_wiki_write.py]:
-    BLOCKED: write into the canonical wiki -> .../wiki/hardware/CANARY2.md
+    Bash          touch CANARY2.md      -> PreToolUse:Bash          blocked
+    Write         create CANARY3.md     -> PreToolUse:Write         blocked
+    Edit          modify CANARY4.md     -> PreToolUse:Edit          blocked
+    NotebookEdit  edit cell CANARY5     -> PreToolUse:NotebookEdit  blocked
+    MultiEdit     not run live - same matcher entry, payload verified
+    Read          allowed throughout, as intended
 
 Note what it took to get that evidence. The skill layer refuses wiki writes so
 reliably that the hook is never reached in normal operation - the first attempt

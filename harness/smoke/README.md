@@ -80,8 +80,12 @@ Its logic is covered by `harness/tests/test_deny_hook.py` and `just check-gate`.
 performed inside `just`, `make`, or any script is invisible to it. Do not build
 the canary into a recipe — it would pass regardless.
 
-**Verified live 2026-09-14** in a fresh session: a direct Bash `touch` into
-`wiki/` was refused at PreToolUse and the file was not created. Getting that
+**Verified live 2026-09-14** in a fresh session, on Bash, Write, Edit and
+NotebookEdit. Each refused at PreToolUse before the tool ran, each left its
+target byte-identical. MultiEdit was not run live: same matcher entry, payload
+verified, so it is covered by inference rather than observation — recorded as
+such deliberately, because the distinction between "registered" and "observed
+firing" is what this whole exercise turned on. `Read` stayed ungated. Getting that
 evidence required explicitly authorising the attempt in the prompt — the skill
 layer otherwise refuses first, and a refusal at layer 1 says nothing about
 layer 2.
