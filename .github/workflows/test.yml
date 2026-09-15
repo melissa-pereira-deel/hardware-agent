@@ -16,24 +16,26 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
-        run: uv python install 3.12
-
+      # A venv, not --system. The runner's /usr is externally managed
+      # (PEP 668) and uv refuses it. This also mirrors what `just setup`
+      # does locally, so CI exercises the documented path rather than a
+      # parallel one that can drift from it.
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          uv venv --python 3.12
+          uv pip install -e ".[dev]"
 
       - name: Tests
-        run: python -m pytest -q
+        run: .venv/bin/python -m pytest -q
 
-      # The repo claims its wiki linter gates commits and its risk policy fails
-      # closed. Both are cheap to prove here rather than asking readers to
-      # take it on trust.
-      - name: Lint the bundled wiki content
-        run: python harness/kb/lint.py wiki-template/wiki
+      # The README makes four claims beyond "tests pass". Cheaper to prove
+      # them than to ask readers to take them on trust.
+      - name: Wiki linter passes its own bundled content
+        run: .venv/bin/python harness/kb/lint.py wiki-template/wiki
 
-      - name: Risk policy fails closed
+      - name: Risk policy fails closed and refuses the injection case
         run: |
-          python -c "
+          .venv/bin/python -c "
           from risk_broker.tiers import Policy
           p = Policy()
           assert p.default_tier == 3, 'default_tier must be 3'
@@ -43,7 +45,7 @@ jobs:
           "
 
       - name: Skill descriptions route correctly
-        run: python harness/check_skill_routing.py
+        run: .venv/bin/python harness/check_skill_routing.py
 
       - name: Write gate logic
-        run: python harness/kb/check_gate.py
+        run: .venv/bin/python harness/kb/check_gate.py
