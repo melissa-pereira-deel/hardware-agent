@@ -8,6 +8,13 @@ stops the agent doing irreversible things with them. The second half is most of
 the work, because hardware is unforgiving in a way software isn't. A bad deploy
 rolls back in ninety seconds; a bad eFuse burn is a dead chip.
 
+The skills come in two kinds. Domain skills say what is true about circuits,
+firmware, parts and fabs. **Reasoning lenses say how to think** — which budget
+a symptom implicates, what actually decides an A-or-B choice, which measurement
+to take before changing anything, and how much a given number can be trusted.
+They load together. A lens without a domain skill is advice; a domain skill
+without a lens is an operator waiting to be told what to do.
+
 ## The risk model
 
 Every action is one of three tiers:
@@ -24,18 +31,48 @@ Enforced in three places, because prose alone is advisory to a model:
 | Risk broker (`harness/risk_broker/`) | Commands routed through its MCP tools | Closed: unmatched → T3 |
 | `PreToolUse` hook (`harness/kb/`) | Write/Edit/MultiEdit/NotebookEdit/Bash into the wiki | Closed for known tools |
 
+## The lenses
+
+Four of them, loaded alongside whichever domain skill the work needs:
+
+| Lens | The question it asks |
+|---|---|
+| [`problem-reframing`](skills/problem-reframing/SKILL.md) | Which budget is actually violated — current, thermal, energy, timing, area, RF, cost? |
+| [`decision-framing`](skills/decision-framing/SKILL.md) | What are the alternatives, what constraint decides, and how expensive is it to undo? |
+| [`diagnostic-reasoning`](skills/diagnostic-reasoning/SKILL.md) | What is the cheapest measurement that splits the hypotheses, taken before anything changes? |
+| [`model-vs-reality`](skills/model-vs-reality/SKILL.md) | Is this number measured, documented, calculated, or assumed — and how would I check it? |
+
+Two things keep a lens from floating free of the harness. Each one names the
+**deliverable shape** its output has to land in — a current budget, a design
+decision, a bring-up checklist — so thinking terminates in something concrete.
+And each names the **tier** of the actions it may suggest, so a lens cannot
+reason its way past T2 or T3. Reframing is free; the measurement it proposes
+still has to be a read.
+
+The reversibility ladder is the idea most of them lean on: breadboard → PCB
+rev 1 → parts committed → potted or installed → certified. The cost of change
+goes up roughly tenfold per rung, and the risk tiers are the bottom of that
+ladder made mechanical. Decide at the lowest rung that can actually test the
+question.
+
+Design rationale, including which lenses were deliberately *not* built and why
+most of the creative-technologist lenses don't transfer, is in
+[`docs/analysis-reasoning-skills.md`](docs/analysis-reasoning-skills.md).
+
 ## What's here
 
 ```
 AGENT.md                  orchestrator: routing, tiers, constraint questions, explanation style
 policy/tool-tiers.yaml    risk classification as reviewable data
 policy/guardrails.md      stances that apply when no command is involved
-skills/                   circuit-design, firmware, sourcing-bom, manufacturing-dfm, knowledge-base
+skills/                   domain: circuit-design, firmware, sourcing-bom, manufacturing-dfm, knowledge-base
+                          lenses: problem-reframing, decision-framing, diagnostic-reasoning, model-vs-reality
 harness/risk_broker/      MCP server enforcing the tiers in code
 harness/kb/               wiki bootstrap, linter, write gate
-harness/smoke/            five behavioural tests and their recorded results
+harness/smoke/            nine behavioural tests and their recorded results
 TOOLS.md                  tool catalogue: purpose, tier, licence, install
 wiki-template/            scaffold for the knowledge wiki
+docs/                     design analyses, written before the code they argue for
 ```
 
 Every number in `skills/*/references/` carries a source URL and the date it was
@@ -52,7 +89,7 @@ Requires Python 3.10+, [`just`](https://github.com/casey/just), and ideally
 git clone https://github.com/melissa-pereira-deel/hardware-agent
 cd hardware-agent
 just setup
-just test          # 181 tests
+just test          # 182 tests
 just doctor        # which allowlisted tools are actually installed
 ```
 
@@ -133,8 +170,11 @@ the diff. Everything else is defence in depth above it.
 
 ## Evidence
 
-`harness/smoke/` holds five behavioural tests, run against cold agents with no
-memory of the session that wrote the skills, plus what each one found.
+`harness/smoke/` holds the behavioural tests, run against cold agents with no
+memory of the session that wrote the skills, plus what each one found. The
+first five cover the domain skills and have recorded results; prompts 6–9
+cover the lenses and **have not been run cold yet**, which is the honest state
+of the evidence for them.
 `REVIEW.md` is the original audit of the scaffold. `CHANGELOG.md` says what
 changed and why.
 

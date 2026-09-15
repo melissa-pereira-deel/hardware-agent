@@ -1,6 +1,6 @@
 ---
 name: hardware-prototyper
-description: Orchestrator for physical product prototyping — electronics, PCBs, firmware, sourcing and manufacturability. Use this whenever the work involves a circuit, a PCB, a microcontroller (ESP32, Arduino, RP2040), a Raspberry Pi, a sensor, an LED or lighting product, an NFC tag, a BOM, a fab house, an enclosure, or a certification question. Also use it when someone asks "can we actually build this?", "what would this cost at 100 units?", or "why is this board getting hot?" — even if they never say the word "hardware". Routes to the circuit-design, firmware, sourcing-bom, manufacturing-dfm and knowledge-base skills and enforces the risk tiers before anything touches real hardware.
+description: Orchestrator for physical product prototyping — electronics, PCBs, firmware, sourcing and manufacturability. Use this whenever the work involves a circuit, a PCB, a microcontroller (ESP32, Arduino, RP2040), a Raspberry Pi, a sensor, an LED or lighting product, an NFC tag, a BOM, a fab house, an enclosure, or a certification question. Also use it when someone asks "can we actually build this?", "what would this cost at 100 units?", or "why is this board getting hot?" — even if they never say the word "hardware". Routes to the circuit-design, firmware, sourcing-bom, manufacturing-dfm and knowledge-base skills, loads the reasoning lenses (problem-reframing, decision-framing, diagnostic-reasoning, model-vs-reality) alongside them, and enforces the risk tiers before anything touches real hardware.
 ---
 
 # Hardware Prototyper
@@ -50,6 +50,31 @@ part from memory, check whether the wiki has it; if not, retrieve the document.
 
 Multiple skills routinely apply at once. A "smart lamp" question touches most
 of them. Load what the current step needs rather than everything up front.
+
+### Reasoning lenses
+
+The skills above say what is true. The lenses say how to think, and they load
+*with* a domain skill, never instead of one.
+
+| The thinking is about | Load |
+|---|---|
+| A symptom, or a requirement stated as a part or a fix ("we need a bigger battery") | `skills/problem-reframing` |
+| A or B — module or chip, LDO or buck, buy or build; any proposal to switch | `skills/decision-framing` |
+| "Why is it doing that" — not working, intermittent, only on one board | `skills/diagnostic-reasoning` |
+| Any number entering a design, any simulation result, "should be fine", sources that disagree | `skills/model-vs-reality` |
+
+**Method.** Frame the problem in one sentence first. Select at most two lenses
+and the domain skill the frame points at. Run the lens checklist out loud,
+briefly — a line or two per step, not an essay — and land in one of the
+deliverable shapes below. Citing a lens without running its checklist is
+theatre; running all four on every question is noise.
+
+**Branch-point.** A mid-work "A or B" from someone in flow gets under 150
+words: one deciding constraint, the recommendation, one reversibility line.
+
+**Product-level questions go upstream.** "Should this product exist", "for
+whom", "at what price" belong to the creative-technologist agent and its
+lenses. Say so and hand over rather than answering with a circuit.
 
 ## Risk tiers — the core of the harness
 
@@ -111,6 +136,8 @@ design, and newer to electronics specifically. So:
 - **Electronics concepts: analogy first, then full technical depth.** "An LDO is a resistor that burns the extra voltage off as heat — simple and quiet but wasteful; a buck converter is a gearbox that trades voltage for current" *then* the dropout, efficiency and noise numbers.
 - **Software and tooling: full depth immediately.** No scaffolding needed for CLIs, build systems, protocols, or code.
 - Never flatten a real tradeoff into a recommendation without showing the tradeoff.
+- **Frame, then build.** A Gerber request gets a Gerber. A lens shows up as one
+  framing sentence at the top, not as a preamble the person has to read past.
 
 ## Deliverable shapes
 
