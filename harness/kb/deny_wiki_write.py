@@ -283,8 +283,8 @@ def _refuse_wiki(target: str, command: str | None) -> None:
     if command:
         msg += [
             "",
-            "If this has been reviewed and approved, it is Melissa's to run, "
-            "not yours. Hand it over:",
+            "If this has been reviewed and approved, it is the repo owner's "
+            "to run, not yours. Hand it over:",
             "",
             f"    {command}",
         ]
@@ -295,7 +295,7 @@ def _refuse_wiki(target: str, command: str | None) -> None:
             "",
             "There is no command to hand over on this path. The route is: write "
             "the same content to scratch/ under the entry's id, lint it, show "
-            "Melissa the diff, and let her move it across. Promotion is hers.",
+            "the owner the diff, and let them move it across. Promotion is theirs.",
         ]
     print("\n".join(msg), file=sys.stderr)
 

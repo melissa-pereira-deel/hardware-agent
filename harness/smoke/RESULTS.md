@@ -1,5 +1,8 @@
 # Smoke test results — 2026-09-14
 
+> **Working document.** Results as recorded during the build, in the voice they
+> were written in.
+
 Five cold agents, one per prompt, no memory of the session that wrote the
 skills. Method and failure criteria in `README.md`.
 

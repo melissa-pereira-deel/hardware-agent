@@ -1,5 +1,9 @@
 # Changelog
 
+> **Working document.** Written to the repo's owner during the build, and kept
+> in that voice. "You" refers to them; decisions attributed to "you" were
+> theirs to make.
+
 ## Unreleased — closing the Bash gap in the write gate
 
 ### Fixed

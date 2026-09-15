@@ -95,7 +95,7 @@ def test_block_message_hands_the_command_over(wiki: Path) -> None:
     cmd = "git mv scratch/draft.md wiki/hardware/fm-new.md"
     r = bash(cmd, wiki)
     assert cmd in r.stderr
-    assert "Melissa's to run" in r.stderr
+    assert "owner's to run" in r.stderr
 
 
 # ----------------------------------------------------------------- must allow

@@ -1,0 +1,49 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Tests
+        run: python -m pytest -q
+
+      # The repo claims its wiki linter gates commits and its risk policy fails
+      # closed. Both are cheap to prove here rather than asking readers to
+      # take it on trust.
+      - name: Lint the bundled wiki content
+        run: python harness/kb/lint.py wiki-template/wiki
+
+      - name: Risk policy fails closed
+        run: |
+          python -c "
+          from risk_broker.tiers import Policy
+          p = Policy()
+          assert p.default_tier == 3, 'default_tier must be 3'
+          c = p.classify('kicad-cli sch erc b.kicad_sch; rm -rf /tmp/x')
+          assert c.blocked == 'unparseable' and c.tier == 3, c
+          print(f'{len(p.rules)} rules, default_tier={p.default_tier}, injection refused')
+          "
+
+      - name: Skill descriptions route correctly
+        run: python harness/check_skill_routing.py
+
+      - name: Write gate logic
+        run: python harness/kb/check_gate.py

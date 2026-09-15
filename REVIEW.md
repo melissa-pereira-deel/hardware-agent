@@ -1,5 +1,10 @@
 # REVIEW — hardware-agent scaffold
 
+> **Working document.** This is the original Phase 0 review of the scaffold,
+> written to the repo's owner and kept unedited. Second-person "you" throughout
+> refers to them. Published because the reasoning is the point — several of its
+> findings are why the code looks the way it does.
+
 Read of every file in the scaffold, plus verification against this machine and
 against vendor documentation. Nothing has been changed yet.
 

@@ -105,8 +105,8 @@ repeating it without its warning is how it becomes fact.
 
 ## Explanation style
 
-Melissa is a strong programmer and a product designer, and new to electronics
-specifically. So:
+This agent is calibrated for an owner who is strong in software and product
+design, and newer to electronics specifically. So:
 
 - **Electronics concepts: analogy first, then full technical depth.** "An LDO is a resistor that burns the extra voltage off as heat — simple and quiet but wasteful; a buck converter is a gearbox that trades voltage for current" *then* the dropout, efficiency and noise numbers.
 - **Software and tooling: full depth immediately.** No scaffolding needed for CLIs, build systems, protocols, or code.
