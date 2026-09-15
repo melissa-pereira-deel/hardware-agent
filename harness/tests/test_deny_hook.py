@@ -224,3 +224,45 @@ def test_other_projects_wiki_directories_are_not_blocked(tmp_path, wiki: Path) -
         wiki,
     )
     assert r.returncode == ALLOW, r.stderr
+
+
+# ------------------------------------------- unknown tools fail closed
+
+def test_unknown_write_capable_tool_is_blocked(wiki: Path) -> None:
+    """A tool-name matcher fails open. Anything not known to be a reader gets
+    its inputs checked, so a future MCP write tool is covered by default."""
+    r = run_hook(
+        {"tool_name": "mcp__somedrive__create_file", "cwd": str(wiki),
+         "tool_input": {"path": str(wiki / "wiki" / "parts" / "p.md"),
+                        "content": "x"}},
+        wiki,
+    )
+    assert r.returncode == BLOCK, r.stderr
+
+
+def test_unknown_tool_with_nested_path_is_blocked(wiki: Path) -> None:
+    r = run_hook(
+        {"tool_name": "mcp__x__batch", "cwd": str(wiki),
+         "tool_input": {"ops": [{"dest": str(wiki / "wiki" / "INDEX.md")}]}},
+        wiki,
+    )
+    assert r.returncode == BLOCK, r.stderr
+
+
+@pytest.mark.parametrize("tool", ["Read", "Grep", "Glob", "WebFetch", "Task"])
+def test_known_read_tools_are_never_blocked(tool: str, wiki: Path) -> None:
+    r = run_hook(
+        {"tool_name": tool, "cwd": str(wiki),
+         "tool_input": {"file_path": str(wiki / "wiki" / "INDEX.md")}},
+        wiki,
+    )
+    assert r.returncode == ALLOW, f"{tool} must stay free\n{r.stderr}"
+
+
+def test_unknown_tool_untouching_the_wiki_is_allowed(wiki: Path) -> None:
+    r = run_hook(
+        {"tool_name": "mcp__somedrive__create_file", "cwd": str(wiki),
+         "tool_input": {"path": "/tmp/unrelated.md", "content": "x"}},
+        wiki,
+    )
+    assert r.returncode == ALLOW, r.stderr

@@ -66,9 +66,14 @@ rules:
       Writing to the canonical wiki mutates shared state that every other agent
       reads. A wrong entry propagates silently and later sessions cite it as
       ground truth. Requires lint pass plus a human reading the diff.
-      NOTE: this rule only sees shell commands. The agent's file-writing tools
-      do not pass through this broker, so the load-bearing gate is the wiki
-      repo's pre-commit hook. This is defence in depth, not the gate itself.
+      NOTE: this rule only sees commands routed through this broker. It is NOT
+      the only thing guarding the wiki, and reading it as such is a mistake an
+      agent has actually made: harness/kb/deny_wiki_write.py is registered as a
+      PreToolUse hook on Write, Edit, MultiEdit, NotebookEdit and Bash, and
+      refuses those regardless of whether the broker is consulted (verified
+      live on both the Bash and Write surfaces, 2026-09-14). The pre-commit
+      lint gate in the wiki repo is the third layer. This rule is defence in
+      depth among several, not the gate itself and not the only one.
     see: skills/knowledge-base/references/trust-and-provenance.md
 
   - tier: 3

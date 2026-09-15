@@ -82,6 +82,23 @@ from pathlib import Path
 DEFAULT_WIKI = Path.home() / "dev" / "wiki-hardware"
 PATH_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 
+# Tools known to read and not write. Everything NOT in this set and not handled
+# above is treated as potentially write-capable and checked for protected paths.
+#
+# This matters because a tool-name matcher fails OPEN: any write-capable tool
+# that did not exist when the matcher was written - a new MCP server, a plugin -
+# is uncovered by default. That is the same shape as the bug this whole file
+# exists to fix, so the default here is refusal, matching default_tier: 3 in
+# policy/tool-tiers.yaml.
+#
+# Dormant unless the hook is registered with a matcher that actually sees those
+# tools (e.g. "*"). With the current Write|Edit|...|Bash matcher it never runs.
+READ_ONLY_TOOLS = {
+    "Read", "Grep", "Glob", "LS", "NotebookRead", "WebFetch", "WebSearch",
+    "TodoWrite", "Task", "Agent", "ListMcpResourcesTool", "ReadMcpResourceTool",
+    "ExitPlanMode", "AskUserQuestion", "BashOutput", "KillShell",
+}
+
 # Shell operators that separate one command from the next.
 SEGMENT_SPLIT = re.compile(r"\|\||&&|[;\n|&]")
 
@@ -266,6 +283,15 @@ def _refuse_wiki(target: str, command: str | None) -> None:
             "",
             f"    {command}",
         ]
+    else:
+        # No shell command to hand over, but the model still needs to know what
+        # the approved route IS, not only what is forbidden.
+        msg += [
+            "",
+            "There is no command to hand over on this path. The route is: write "
+            "the same content to scratch/ under the entry's id, lint it, show "
+            "Melissa the diff, and let her move it across. Promotion is hers.",
+        ]
     print("\n".join(msg), file=sys.stderr)
 
 
@@ -281,6 +307,20 @@ def _refuse_raw(target: str) -> None:
         "new entry, not an edit to the old one.",
         file=sys.stderr,
     )
+
+
+def _walk_strings(node, depth: int = 0):
+    """Every string value in a nested tool input, for unknown-tool inspection."""
+    if depth > 6:
+        return
+    if isinstance(node, str):
+        yield node
+    elif isinstance(node, dict):
+        for v in node.values():
+            yield from _walk_strings(v, depth + 1)
+    elif isinstance(node, (list, tuple)):
+        for v in node:
+            yield from _walk_strings(v, depth + 1)
 
 
 def main() -> int:
@@ -318,6 +358,20 @@ def main() -> int:
                 _refuse_raw(token)
             return 2
         return 0
+
+    if tool in READ_ONLY_TOOLS:
+        return 0
+
+    # Unknown tool. Fail closed: if a protected path appears anywhere in its
+    # input, refuse rather than assume it is a reader.
+    for value in _walk_strings(tool_input):
+        kind = classify_target(value, cwd)
+        if kind == "wiki":
+            _refuse_wiki(value, None)
+            return 2
+        if kind == "raw-existing":
+            _refuse_raw(value)
+            return 2
 
     return 0
 
