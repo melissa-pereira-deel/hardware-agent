@@ -4,6 +4,53 @@
 > in that voice. "You" refers to them; decisions attributed to "you" were
 > theirs to make.
 
+## Unreleased — reasoning lenses
+
+### Added
+
+- **Four reasoning lenses** under `skills/`: `problem-reframing`,
+  `decision-framing`, `diagnostic-reasoning`, `model-vs-reality`. The five
+  existing skills are domain knowledge — what is true about circuits, parts and
+  fabs. Nothing owned the layer above: which budget a symptom implicates, what
+  decides an A-or-B choice, which measurement to take first, how much a number
+  can be trusted. That judgment existed in the repo already, scattered as
+  imperatives across `AGENT.md` and `guardrails.md`, with no procedure to run
+  and no trigger saying when. The lenses collect it.
+- Each lens carries two sections the creative-technologist format doesn't have:
+  **Lands in**, naming the deliverable shape its output must take, and **Tier
+  note**, naming the tier of the actions it may suggest. Without those a lens
+  is advice floating next to a harness rather than part of one.
+- Four smoke prompts (6–9) covering the lenses, with failure criteria.
+  **Not yet run cold** — they need fresh agent sessions, which no script
+  produces.
+- `docs/analysis-reasoning-skills.md`, the analysis the lenses were built from,
+  including the eight candidates considered and why four were deferred.
+
+### Changed
+
+- `check_skill_routing.py` now scores a prompt against its own group. Domain
+  skills route on nouns, lenses on verbs, and the two are *meant* to load
+  together — ranking them against each other reported every intended co-load as
+  a collision. 46 prompts now, up from 26.
+- `AGENT.md` gains a second routing table for the lenses, a method line (frame,
+  select at most two, run the checklist briefly, land in a deliverable shape), a
+  branch-point rule capping mid-work A-or-B answers at 150 words, and an
+  explicit handoff upstream to the creative-technologist agent for product-level
+  questions.
+
+### Notes
+
+- Ownership, so the ~70% overlap `REVIEW.md` §3 found between `AGENT.md` and
+  `guardrails.md` doesn't grow a third copy: guardrails hold stances, lenses
+  hold procedures, `AGENT.md` holds routing.
+- `model-vs-reality` deliberately reuses the `trust:` / `confidence:`
+  vocabulary from `knowledge-base/references/trust-and-provenance.md` rather
+  than inventing a parallel scale, so a claim in a design and a claim in the
+  wiki mean the same thing.
+- A colon inside one lens description broke its YAML frontmatter and would have
+  stopped that skill loading entirely. `test_tiers.py` caught it, which is the
+  test earning its keep — it was written after the same failure in Phase 2.
+
 ## Unreleased — closing the Bash gap in the write gate
 
 ### Fixed
