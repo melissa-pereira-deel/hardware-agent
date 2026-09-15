@@ -63,6 +63,9 @@ ID, authorised test lab, DCL listing — on top of the radio certification.
 
 ## Tools
 
+Install, licence and tier for every tool named here: `TOOLS.md`.
+`just doctor` says which are present on this machine.
+
 **T1 — run freely:**
 ```bash
 kicad-cli pcb export gerbers board.kicad_pcb --output fab/

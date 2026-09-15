@@ -90,6 +90,9 @@ flicker-free. Note that low PWM duty does not meaningfully extend LED lifespan.
 
 ## Tools
 
+Install, licence and tier for every tool named here: `TOOLS.md`.
+`just doctor` says which are present on this machine.
+
 **T1 — run freely:**
 ```bash
 kicad-cli sch erc board.kicad_sch --output erc.rpt --exit-code-violations

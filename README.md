@@ -52,8 +52,13 @@ Requires Python 3.10+, [`just`](https://github.com/casey/just), and ideally
 git clone https://github.com/melissa-pereira-deel/hardware-agent
 cd hardware-agent
 just setup
-just test          # 170 tests
+just test          # 181 tests
+just doctor        # which allowlisted tools are actually installed
 ```
+
+`TOOLS.md` catalogues every tool the agent can drive — purpose, risk tier,
+licence and install command. Being allowlisted is not the same as being
+installed; `just doctor` reports the difference.
 
 ### Register the risk broker
 

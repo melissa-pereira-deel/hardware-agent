@@ -70,6 +70,9 @@ can't be switched on without the internet is a defect.
 
 ## Tools
 
+Install, licence and tier for every tool named here: `TOOLS.md`.
+`just doctor` says which are present on this machine.
+
 **T1 — run freely:**
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32c6 .
