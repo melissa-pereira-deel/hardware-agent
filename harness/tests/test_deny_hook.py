@@ -266,3 +266,35 @@ def test_unknown_tool_untouching_the_wiki_is_allowed(wiki: Path) -> None:
         wiki,
     )
     assert r.returncode == ALLOW, r.stderr
+
+
+# --------------------------------------------------- symlinked wiki root
+
+def test_gate_holds_when_the_wiki_root_is_reached_through_a_symlink(
+    tmp_path: Path, wiki: Path
+) -> None:
+    """Regression: wiki_root() did not resolve symlinks while target paths did.
+
+    On macOS /var is a symlink to /private/var, so a wiki under a temp dir
+    compared unequal to the same wiki resolved, and the gate fell open. CI
+    found this; no local run did, because pytest's tmp_path is already
+    resolved and the real wiki is not behind a symlink.
+    """
+    import os
+
+    link = tmp_path / "link-to-wiki"
+    link.symlink_to(wiki, target_is_directory=True)
+
+    env = {**os.environ, "HARDWARE_AGENT_WIKI": str(link)}
+    r = subprocess.run(
+        [sys.executable, str(HOOK)],
+        input=json.dumps({
+            "tool_name": "Bash",
+            "cwd": str(link),
+            "tool_input": {"command": "cp scratch/draft.md wiki/hardware/x.md"},
+        }),
+        capture_output=True, text=True, env=env,
+    )
+    assert r.returncode == BLOCK, (
+        f"gate fell open through a symlinked root\n{r.stderr}"
+    )

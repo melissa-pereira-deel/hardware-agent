@@ -134,7 +134,11 @@ REDIRECT = re.compile(r">>?\s*([^\s;|&]+)")
 
 
 def wiki_root() -> Path:
-    return Path(os.environ.get("HARDWARE_AGENT_WIKI", DEFAULT_WIKI)).expanduser()
+    # .resolve() matters. Target paths are resolved before comparison, so a
+    # root left unresolved never matches when the path crosses a symlink -
+    # on macOS /var -> /private/var is enough to make the gate fall open
+    # silently. Found by CI, not by any local run.
+    return Path(os.environ.get("HARDWARE_AGENT_WIKI", DEFAULT_WIKI)).expanduser().resolve()
 
 
 def _resolve(token: str, cwd: str | None) -> Path | None:

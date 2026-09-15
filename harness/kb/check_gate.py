@@ -14,6 +14,7 @@ you start a new one.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -37,6 +38,26 @@ CASES = [
 ]
 
 
+def build_fixture(root: Path) -> Path:
+    """A throwaway wiki tree the cases run against.
+
+    The checks used to run against the real wiki, which made one of them
+    depend on the author's disk: `cp new.pdf raw/ws2812b_datasheet.pdf` is
+    only blocked when that file already exists, so it passed locally and
+    failed in CI. A logic check that needs a particular machine is not a
+    logic check.
+    """
+    (root / "wiki" / "hardware").mkdir(parents=True)
+    (root / "wiki" / "parts").mkdir(parents=True)
+    (root / "scratch").mkdir()
+    (root / "raw").mkdir()
+    (root / "wiki" / "hardware" / "fm-ws2812-level-shift.md").write_text("---\nid: x\n---\n")
+    (root / "wiki" / "INDEX.md").write_text("# Index\n")
+    (root / "raw" / "ws2812b_datasheet.pdf").write_bytes(b"%PDF-1.4 fixture")
+    (root / "scratch" / "x.md").write_text("draft\n")
+    return root
+
+
 def main() -> int:
     if "--live" in sys.argv:
         print(
@@ -50,13 +71,21 @@ def main() -> int:
         )
         return 0
 
+    import os
+    import tempfile
+
+    tmp = Path(tempfile.mkdtemp())
+    fixture = build_fixture(tmp / "wiki-hardware")
+    env = {**os.environ, "HARDWARE_AGENT_WIKI": str(fixture)}
+
     failures = 0
-    print(f"gate logic check — hook: {HOOK}\n")
+    print(f"gate logic check — hook: {HOOK}")
+    print(f"fixture wiki:            {fixture}\n")
     for expected, command in CASES:
-        payload = {"tool_name": "Bash", "cwd": str(WIKI),
+        payload = {"tool_name": "Bash", "cwd": str(fixture),
                    "tool_input": {"command": command}}
         r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps(payload),
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, env=env)
         actual = "block" if r.returncode == 2 else "allow"
         ok = actual == expected
         failures += not ok
@@ -68,6 +97,7 @@ def main() -> int:
         return 1
     print("gate logic correct. NOTE: this proves the script works, not that the")
     print("hook is wired into your current session. Run with --live for that.")
+    shutil.rmtree(tmp, ignore_errors=True)
     return 0
 
 
